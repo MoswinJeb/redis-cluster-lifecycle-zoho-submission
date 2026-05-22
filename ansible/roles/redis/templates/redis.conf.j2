@@ -1,0 +1,18 @@
+bind 0.0.0.0
+port 6379
+
+protected-mode no
+
+dir /var/lib/redis
+
+dbfilename dump.rdb
+
+appendonly yes
+
+cluster-enabled yes
+cluster-config-file nodes.conf
+cluster-node-timeout 5000
+
+daemonize yes
+
+logfile /var/log/redis.log

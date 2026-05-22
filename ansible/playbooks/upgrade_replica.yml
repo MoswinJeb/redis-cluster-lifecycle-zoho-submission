@@ -1,0 +1,81 @@
+- hosts: redis-node-4
+  gather_facts: no
+  become: yes
+
+  vars:
+    target_version: "7.2.6"
+
+  tasks:
+
+    - name: Stop Redis
+      shell: pkill redis-server || true
+
+    - name: Download Redis {{ target_version }}
+      shell: |
+        cd /tmp
+
+        rm -rf redis-{{ target_version }}
+        rm -f redis-{{ target_version }}.tar.gz
+
+        wget http://download.redis.io/releases/redis-{{ target_version }}.tar.gz
+
+        tar xzf redis-{{ target_version }}.tar.gz
+      args:
+        executable: /bin/bash
+
+    - name: Build Redis {{ target_version }}
+      shell: |
+        cd /tmp/redis-{{ target_version }}
+
+        make -j4
+      args:
+        executable: /bin/bash
+
+    - name: Install Redis {{ target_version }}
+      shell: |
+        cd /tmp/redis-{{ target_version }}
+
+        make install
+      args:
+        executable: /bin/bash
+
+    - name: Restart Redis
+      shell: |
+        nohup redis-server \
+          --port 6379 \
+          --cluster-enabled yes \
+          --cluster-config-file nodes.conf \
+          --cluster-node-timeout 5000 \
+          --appendonly yes \
+          --bind 0.0.0.0 \
+          > /tmp/redis.log 2>&1 &
+      args:
+        executable: /bin/bash
+
+    - name: Wait for Redis to start
+      wait_for:
+        host: 10.10.0.14
+        port: 6379
+        timeout: 30
+
+    - name: Verify upgraded Redis version
+      shell: redis-server --version | awk '{print $3}' | cut -d'=' -f2
+      register: redis_version
+
+    - name: Show upgraded version
+      debug:
+        msg: "Replica upgraded to Redis {{ redis_version.stdout }}"
+
+- hosts: redis-node-1
+  gather_facts: no
+  become: yes
+
+  tasks:
+
+    - name: Verify cluster state after replica upgrade
+      shell: redis-cli cluster info | grep cluster_state | cut -d':' -f2
+      register: cluster_state
+
+    - name: Show cluster state
+      debug:
+        msg: "Cluster state after upgrade: {{ cluster_state.stdout }}"

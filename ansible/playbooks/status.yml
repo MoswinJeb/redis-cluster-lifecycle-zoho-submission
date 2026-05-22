@@ -1,0 +1,66 @@
+- hosts: redis-node-1
+  gather_facts: no
+
+  tasks:
+
+    - name: Get cluster state
+      shell: redis-cli cluster info | grep cluster_state | cut -d':' -f2
+      register: cluster_state
+
+    - name: Print cluster state
+      debug:
+        msg: "Cluster State: {{ cluster_state.stdout }}"
+
+    - name: Print masters
+      shell: |
+        echo "MASTERS"
+
+        redis-cli cluster nodes | grep master | while read line; do
+
+          ip=$(echo $line | awk '{print $2}' | cut -d'@' -f1)
+
+          slots=$(echo $line | awk '{print $9}')
+
+          node_ip=$(echo $ip | cut -d':' -f1)
+
+          version=$(redis-cli -h $node_ip INFO server | grep redis_version | cut -d':' -f2 | tr -d '\r')
+
+          keys=$(redis-cli -h $node_ip dbsize)
+
+          mem=$(redis-cli -h $node_ip INFO memory | grep used_memory_human | cut -d':' -f2 | tr -d '\r')
+
+          echo "$ip [master] v$version slots: $slots keys: $keys mem: $mem"
+
+        done
+      register: masters_output
+
+    - name: Show masters
+      debug:
+        var: masters_output.stdout_lines
+
+    - name: Print replicas
+      shell: |
+        echo "REPLICAS"
+
+        redis-cli cluster nodes | grep slave | grep -E '^[0-9a-f]+ 10\.' | while read line; do
+
+          ip=$(echo $line | awk '{print $2}' | cut -d'@' -f1)
+
+          master_id=$(echo $line | awk '{print $4}')
+
+          node_ip=$(echo $ip | cut -d':' -f1)
+
+          version=$(redis-cli -h $node_ip INFO server | grep redis_version | cut -d':' -f2 | tr -d '\r')
+
+          mem=$(redis-cli -h $node_ip INFO memory | grep used_memory_human | cut -d':' -f2 | tr -d '\r')
+
+          master_ip=$(redis-cli cluster nodes | grep master | grep $master_id | awk '{print $2}' | cut -d'@' -f1)
+
+          echo "$ip [replica] v$version replicating: $master_ip mem: $mem"
+
+        done
+      register: replicas_output
+
+    - name: Show replicas
+      debug:
+        var: replicas_output.stdout_lines

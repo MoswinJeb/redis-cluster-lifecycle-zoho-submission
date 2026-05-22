@@ -1,0 +1,20 @@
+- hosts: redis-node-1
+  gather_facts: no
+
+  tasks:
+
+    - name: Seed 1000 deterministic keys into Redis Cluster
+      shell: |
+        for i in $(seq -w 1 1000); do
+          key="key:$i"
+          value=$(echo -n "$key" | sha256sum | awk '{print $1}')
+
+          redis-cli -c -h 10.10.0.11 -p 6379 SET "$key" "$value" > /dev/null
+        done
+
+        echo "Inserted 1000 keys into Redis Cluster"
+      register: seed_output
+
+    - name: Print seed result
+      debug:
+        var: seed_output.stdout
