@@ -1,0 +1,14 @@
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Verify 1000 Redis keys] **************************************************
+changed: [redis-node-1]
+
+TASK [Print verification result] ***********************************************
+ok: [redis-node-1] => {
+    "verify_output.stdout": "PASS — 1000/1000 keys verified"
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

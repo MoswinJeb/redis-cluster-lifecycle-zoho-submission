@@ -1,0 +1,40 @@
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Get cluster state] *******************************************************
+changed: [redis-node-1]
+
+TASK [Print cluster state] *****************************************************
+ok: [redis-node-1] => {
+    "msg": "Cluster State: ok"
+}
+
+TASK [Print masters] ***********************************************************
+changed: [redis-node-1]
+
+TASK [Show masters] ************************************************************
+ok: [redis-node-1] => {
+    "masters_output.stdout_lines": [
+        "MASTERS",
+        "10.10.0.11:6379 [master] v7.0.15 slots: 0-5460 keys: 333 mem: 1.99M",
+        "10.10.0.12:6379 [master] v7.0.15 slots: 5461-10922 keys: 324 mem: 2.00M",
+        "10.10.0.13:6379 [master] v7.0.15 slots: 10923-16383 keys: 343 mem: 2.01M"
+    ]
+}
+
+TASK [Print replicas] **********************************************************
+changed: [redis-node-1]
+
+TASK [Show replicas] ***********************************************************
+ok: [redis-node-1] => {
+    "replicas_output.stdout_lines": [
+        "REPLICAS",
+        "10.10.0.14:6379 [replica] v7.0.15 replicating: 10.10.0.13:6379 mem: 1.92M",
+        "10.10.0.15:6379 [replica] v7.0.15 replicating: 10.10.0.11:6379 mem: 1.92M",
+        "10.10.0.16:6379 [replica] v7.0.15 replicating: 10.10.0.12:6379 mem: 1.91M"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=6    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

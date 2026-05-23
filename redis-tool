@@ -1,0 +1,74 @@
+#!/bin/bash
+
+COMMAND=$1
+
+case $COMMAND in
+
+  provision)
+    cd ansible
+    ansible-playbook playbooks/provision.yml
+    ansible-playbook playbooks/create_cluster.yml
+    ;;
+
+  seed)
+    cd ansible
+    ansible-playbook playbooks/data_seed.yml
+    ;;
+
+  verify)
+    cd ansible
+    ansible-playbook playbooks/data_verify.yml
+    ;;
+
+  status)
+    cd ansible
+    ansible-playbook playbooks/status.yml
+    ;;
+
+  precheck)
+    cd ansible
+    ansible-playbook playbooks/upgrade_precheck.yml
+    ;;
+
+  failover)
+    REPLICA=$2
+
+    if [ -z "$REPLICA" ]; then
+      echo "Usage: ./redis-tool failover <replica-node>"
+      exit 1
+    fi
+
+    cd ansible
+    ansible-playbook playbooks/failover.yml \
+      -e target_replica=$REPLICA
+    ;;
+
+  upgrade-node)
+    NODE=$2
+    IP=$3
+    VERSION=$4
+
+    if [ -z "$NODE" ] || [ -z "$IP" ] || [ -z "$VERSION" ]; then
+      echo "Usage: ./redis-tool upgrade-node <node> <ip> <version>"
+      exit 1
+    fi
+
+    cd ansible
+    ansible-playbook playbooks/upgrade_node.yml \
+      -e target_node=$NODE \
+      -e node_ip=$IP \
+      -e redis_version=$VERSION
+    ;;
+
+  *)
+    echo "Usage:"
+    echo "./redis-tool provision"
+    echo "./redis-tool seed"
+    echo "./redis-tool verify"
+    echo "./redis-tool status"
+    echo "./redis-tool precheck"
+    echo "./redis-tool failover <replica-node>"
+    echo "./redis-tool upgrade-node <node> <ip> <version>"
+    ;;
+
+esac

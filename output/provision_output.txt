@@ -1,0 +1,92 @@
+
+PLAY [redis] *******************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-1]
+ok: [redis-node-2]
+ok: [redis-node-5]
+ok: [redis-node-4]
+ok: [redis-node-3]
+ok: [redis-node-6]
+
+TASK [redis : Install Redis build dependencies] ********************************
+ok: [redis-node-4]
+ok: [redis-node-1]
+ok: [redis-node-5]
+ok: [redis-node-2]
+ok: [redis-node-3]
+ok: [redis-node-6]
+
+TASK [redis : Download Redis source] *******************************************
+ok: [redis-node-1]
+ok: [redis-node-3]
+ok: [redis-node-2]
+ok: [redis-node-5]
+ok: [redis-node-4]
+ok: [redis-node-6]
+
+TASK [redis : Extract Redis source] ********************************************
+changed: [redis-node-5]
+changed: [redis-node-2]
+changed: [redis-node-1]
+changed: [redis-node-4]
+changed: [redis-node-3]
+changed: [redis-node-6]
+
+TASK [redis : Build Redis] *****************************************************
+changed: [redis-node-3]
+changed: [redis-node-5]
+changed: [redis-node-1]
+changed: [redis-node-4]
+changed: [redis-node-2]
+changed: [redis-node-6]
+
+TASK [redis : Install Redis] ***************************************************
+changed: [redis-node-1]
+changed: [redis-node-3]
+changed: [redis-node-2]
+changed: [redis-node-5]
+changed: [redis-node-4]
+changed: [redis-node-6]
+
+TASK [redis : Create Redis data directory] *************************************
+ok: [redis-node-1]
+ok: [redis-node-2]
+ok: [redis-node-5]
+ok: [redis-node-4]
+ok: [redis-node-3]
+ok: [redis-node-6]
+
+TASK [redis : Copy Redis configuration] ****************************************
+ok: [redis-node-1]
+ok: [redis-node-5]
+ok: [redis-node-2]
+ok: [redis-node-3]
+ok: [redis-node-4]
+ok: [redis-node-6]
+
+TASK [redis : Start Redis server] **********************************************
+changed: [redis-node-2]
+changed: [redis-node-4]
+changed: [redis-node-3]
+changed: [redis-node-1]
+changed: [redis-node-5]
+changed: [redis-node-6]
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-2               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-3               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-4               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-5               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-6               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Create Redis Cluster] ****************************************************
+fatal: [redis-node-1]: FAILED! => {"changed": true, "cmd": "yes yes | redis-cli --cluster create 10.10.0.11:6379 10.10.0.12:6379 10.10.0.13:6379 10.10.0.14:6379 10.10.0.15:6379 10.10.0.16:6379 --cluster-replicas 1\n", "delta": "0:00:00.008076", "end": "2026-05-23 06:40:10.821708", "msg": "non-zero return code", "rc": 1, "start": "2026-05-23 06:40:10.813632", "stderr": "", "stderr_lines": [], "stdout": "\u001b[31;1m[ERR] Node 10.10.0.11:6379 is not empty. Either the node already knows other nodes (check with CLUSTER NODES) or contains some key in database 0.\n\u001b[0m", "stdout_lines": ["\u001b[31;1m[ERR] Node 10.10.0.11:6379 is not empty. Either the node already knows other nodes (check with CLUSTER NODES) or contains some key in database 0.", "\u001b[0m"]}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=0    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+

@@ -1,0 +1,14 @@
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Seed 1000 deterministic keys into Redis Cluster] *************************
+changed: [redis-node-1]
+
+TASK [Print seed result] *******************************************************
+ok: [redis-node-1] => {
+    "seed_output.stdout": "Inserted 1000 keys into Redis Cluster"
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

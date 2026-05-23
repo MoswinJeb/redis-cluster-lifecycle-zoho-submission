@@ -27,4 +27,10 @@ RUN chown -R ansible:ansible /home/ansible/.ssh && \
 
 EXPOSE 22
 
-CMD ["/usr/sbin/sshd", "-D"]
+RUN mkdir -p /var/lib/redis
+
+COPY startup.sh /startup.sh
+
+RUN chmod +x /startup.sh
+
+CMD ["/startup.sh"]
