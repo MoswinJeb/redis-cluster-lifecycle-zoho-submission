@@ -23,11 +23,11 @@
 
           node_ip=$(echo $ip | cut -d':' -f1)
 
-          version=$(redis-cli -h $node_ip INFO server | grep redis_version | cut -d':' -f2 | tr -d '\r')
+          version=$(redis-cli -h $node_ip INFO server 2>/dev/null | awk -F: '/redis_version/ {print $2}' | tr -d '\r')
 
-          keys=$(redis-cli -h $node_ip dbsize)
+          keys=$(redis-cli -h $node_ip DBSIZE 2>/dev/null)
 
-          mem=$(redis-cli -h $node_ip INFO memory | grep used_memory_human | cut -d':' -f2 | tr -d '\r')
+          mem=$(redis-cli -h $node_ip INFO memory 2>/dev/null | awk -F: '/used_memory_human/ {print $2}' | tr -d '\r')
 
           echo "$ip [master] v$version slots: $slots keys: $keys mem: $mem"
 
@@ -42,7 +42,7 @@
       shell: |
         echo "REPLICAS"
 
-        redis-cli cluster nodes | grep slave | grep -E '^[0-9a-f]+ 10\.' | while read line; do
+        redis-cli cluster nodes | grep slave | grep -E '^[0-9a-f]+' | while read line; do
 
           ip=$(echo $line | awk '{print $2}' | cut -d'@' -f1)
 
@@ -50,9 +50,9 @@
 
           node_ip=$(echo $ip | cut -d':' -f1)
 
-          version=$(redis-cli -h $node_ip INFO server | grep redis_version | cut -d':' -f2 | tr -d '\r')
+          version=$(redis-cli -h $node_ip INFO server 2>/dev/null | awk -F: '/redis_version/ {print $2}' | tr -d '\r')
 
-          mem=$(redis-cli -h $node_ip INFO memory | grep used_memory_human | cut -d':' -f2 | tr -d '\r')
+          mem=$(redis-cli -h $node_ip INFO memory 2>/dev/null | awk -F: '/used_memory_human/ {print $2}' | tr -d '\r')
 
           master_ip=$(redis-cli cluster nodes | grep master | grep $master_id | awk '{print $2}' | cut -d'@' -f1)
 

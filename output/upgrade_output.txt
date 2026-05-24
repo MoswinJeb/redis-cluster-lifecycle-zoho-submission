@@ -1,85 +1,163 @@
-- hosts: "{{ target_node }}"
-  gather_facts: no
-  become: yes
+===== PRECHECK =====
 
-  vars:
-    target_version: "{{ redis_version }}"
-    announce_ip: "{{ node_ip }}"
+PLAY [redis] *******************************************************************
 
-  tasks:
+TASK [Verify all nodes reachable] **********************************************
+ok: [redis-node-2]
+ok: [redis-node-4]
+ok: [redis-node-5]
+ok: [redis-node-3]
+ok: [redis-node-1]
+ok: [redis-node-6]
 
-    - name: Stop Redis
-      shell: pkill redis-server || true
+PLAY [redis-node-1] ************************************************************
 
-    - name: Download Redis {{ target_version }}
-      shell: |
-        cd /tmp
+TASK [Check cluster state] *****************************************************
+changed: [redis-node-1]
 
-        rm -rf redis-{{ target_version }}
-        rm -f redis-{{ target_version }}.tar.gz
+TASK [Fail if cluster not healthy] *********************************************
+skipping: [redis-node-1]
 
-        wget http://download.redis.io/releases/redis-{{ target_version }}.tar.gz
+TASK [Show cluster state] ******************************************************
+ok: [redis-node-1] => {
+    "msg": "Cluster state verified: ok"
+}
 
-        tar xzf redis-{{ target_version }}.tar.gz
-      args:
-        executable: /bin/bash
+TASK [Get current Redis version] ***********************************************
+changed: [redis-node-1]
 
-    - name: Build Redis {{ target_version }}
-      shell: |
-        cd /tmp/redis-{{ target_version }}
+TASK [Show current Redis version] **********************************************
+ok: [redis-node-1] => {
+    "msg": "Current Redis version: 7.0.15"
+}
 
-        make -j4
-      args:
-        executable: /bin/bash
+TASK [Fail if already on target version] ***************************************
+skipping: [redis-node-1]
 
-    - name: Install Redis {{ target_version }}
-      shell: |
-        cd /tmp/redis-{{ target_version }}
+TASK [Verify cluster data integrity] *******************************************
+changed: [redis-node-1]
 
-        make install
-      args:
-        executable: /bin/bash
+TASK [Show verification result] ************************************************
+ok: [redis-node-1] => {
+    "msg": "Data verification: PASS"
+}
 
-    - name: Restart Redis
-      shell: |
-        nohup redis-server \
-          --port 6379 \
-          --cluster-enabled yes \
-          --cluster-config-file /var/lib/redis/nodes.conf \
-          --cluster-node-timeout 5000 \
-          --cluster-announce-ip {{ announce_ip }} \
-          --cluster-announce-port 6379 \
-          --cluster-announce-bus-port 16379 \
-          --appendonly yes \
-          --protected-mode no \
-          --bind 0.0.0.0 \
-          > /tmp/redis.log 2>&1 &
-      args:
-        executable: /bin/bash
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=7    changed=3    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+redis-node-2               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-3               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-4               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-5               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-6               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
-    - name: Wait for Redis to start
-      wait_for:
-        host: "{{ announce_ip }}"
-        port: 6379
-        timeout: 30
 
-    - name: Verify upgraded Redis version
-      shell: redis-server --version | awk '{print $3}' | cut -d'=' -f2
-      register: redis_version_output
+===== FAILOVER =====
 
-    - name: Show upgraded version
-      debug:
-        msg: "Node upgraded to Redis {{ redis_version_output.stdout }}"
+PLAY [redis-node-3] ************************************************************
 
-- hosts: redis-node-1
-  gather_facts: no
+TASK [Trigger manual failover] *************************************************
+changed: [redis-node-3]
 
-  tasks:
+TASK [Show failover result] ****************************************************
+ok: [redis-node-3] => {
+    "failover_output.stdout_lines": [
+        "OK"
+    ]
+}
 
-    - name: Verify cluster state after upgrade
-      shell: redis-cli cluster info | grep cluster_state | cut -d':' -f2
-      register: cluster_state
+PLAY [redis-node-1] ************************************************************
 
-    - name: Show cluster state
-      debug:
-        msg: "Cluster state after upgrade: {{ cluster_state.stdout }}"
+TASK [Wait for cluster stabilization] ******************************************
+Pausing for 10 seconds
+(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)
+ok: [redis-node-1]
+
+TASK [Verify cluster state] ****************************************************
+changed: [redis-node-1]
+
+TASK [Show cluster state] ******************************************************
+ok: [redis-node-1] => {
+    "msg": "Cluster state after failover: ok"
+}
+
+TASK [Show cluster topology] ***************************************************
+changed: [redis-node-1]
+
+TASK [Print cluster topology] **************************************************
+ok: [redis-node-1] => {
+    "cluster_nodes.stdout_lines": [
+        "6c46a6e911a84b509e14dd74bd11f25cb581c396 10.10.0.12:6379@16379 master - 0 1779652752000 2 connected 5461-10922",
+        "47dc586b0717dd6e6e784daca1b711c5afc91bb6 10.10.0.14:6379@16379 master - 0 1779652753055 10 connected 10923-16383",
+        "5e16737d9fe8b1e2cd02ea7de3ee2b023e7934b1 10.10.0.11:6379@16379 myself,slave 24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 0 1779652753000 7 connected",
+        "327b8f6d37480e77c37439c6feecff3801e943ac 10.10.0.13:6379@16379 slave 47dc586b0717dd6e6e784daca1b711c5afc91bb6 0 1779652752050 10 connected",
+        "33c3b52af0f3af6d541e68f770b1b30551e8385e 10.10.0.16:6379@16379 slave 6c46a6e911a84b509e14dd74bd11f25cb581c396 0 1779652754060 2 connected",
+        "24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 10.10.0.15:6379@16379 master - 0 1779652753558 7 connected 0-5460"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=5    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-3               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+===== DIRECT VERSION CHECK =====
+redis-node-4 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=7f3a16c2144be07
+
+===== FINAL STATUS =====
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Get cluster state] *******************************************************
+changed: [redis-node-1]
+
+TASK [Print cluster state] *****************************************************
+ok: [redis-node-1] => {
+    "msg": "Cluster State: ok"
+}
+
+TASK [Print masters] ***********************************************************
+changed: [redis-node-1]
+
+TASK [Show masters] ************************************************************
+ok: [redis-node-1] => {
+    "masters_output.stdout_lines": [
+        "MASTERS",
+        "10.10.0.12:6379 [master] v7.0.15 slots: 5461-10922 keys: 324 mem: 1.80M",
+        "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383 keys: 343 mem: 1.81M",
+        "10.10.0.15:6379 [master] v7.0.15 slots: 0-5460 keys: 333 mem: 1.83M"
+    ]
+}
+
+TASK [Print replicas] **********************************************************
+changed: [redis-node-1]
+
+TASK [Show replicas] ***********************************************************
+ok: [redis-node-1] => {
+    "replicas_output.stdout_lines": [
+        "REPLICAS",
+        "10.10.0.11:6379 [replica] v7.0.15 replicating: 10.10.0.15:6379 mem: 1.81M",
+        "10.10.0.13:6379 [replica] v7.0.15 replicating: 10.10.0.14:6379 mem: 1.74M",
+        "10.10.0.16:6379 [replica] v7.0.15 replicating: 10.10.0.12:6379 mem: 1.69M"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=6    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+===== DATA VERIFY =====
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Verify 1000 Redis keys] **************************************************
+changed: [redis-node-1]
+
+TASK [Print verification result] ***********************************************
+ok: [redis-node-1] => {
+    "verify_output.stdout": "PASS — 1000/1000 keys verified"
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

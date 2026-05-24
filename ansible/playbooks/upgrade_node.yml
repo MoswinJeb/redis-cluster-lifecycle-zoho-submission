@@ -1,77 +1,73 @@
 - hosts: "{{ target_node }}"
-  gather_facts: no
   become: yes
+  gather_facts: no
 
   vars:
-    target_version: "{{ redis_version }}"
-    announce_ip: "{{ node_ip }}"
+    redis_version: "{{ redis_version }}"
 
   tasks:
 
-    - name: Stop Redis
-      shell: pkill redis-server || true
+    - name: Check current Redis version
+      shell: redis-server --version | awk '{print $3}' | cut -d'=' -f2
+      register: current_version
 
-    - name: Download Redis {{ target_version }}
+    - name: Show current version
+      debug:
+        msg: "Current Redis version: {{ current_version.stdout }}"
+
+    - name: Skip upgrade if already on target version
+      debug:
+        msg: "Node already running Redis {{ redis_version }}. Skipping upgrade."
+      when: current_version.stdout == redis_version
+
+    - name: End play if already upgraded
+      meta: end_play
+      when: current_version.stdout == redis_version
+
+    - name: Stop Redis
+      shell: pkill redis-server
+      ignore_errors: yes
+
+    - name: Download Redis {{ redis_version }}
       shell: |
         cd /tmp
+        rm -rf redis-{{ redis_version }}
+        rm -f redis-{{ redis_version }}.tar.gz
 
-        rm -rf redis-{{ target_version }}
-        rm -f redis-{{ target_version }}.tar.gz
+        wget -q http://download.redis.io/releases/redis-{{ redis_version }}.tar.gz
 
-        wget http://download.redis.io/releases/redis-{{ target_version }}.tar.gz
+        tar xzf redis-{{ redis_version }}.tar.gz
 
-        tar xzf redis-{{ target_version }}.tar.gz
-      args:
-        executable: /bin/bash
-
-    - name: Build Redis {{ target_version }}
+    - name: Build Redis {{ redis_version }}
       shell: |
-        cd /tmp/redis-{{ target_version }}
+        cd /tmp/redis-{{ redis_version }}
+        make
 
-        make -j4
-      args:
-        executable: /bin/bash
-
-    - name: Install Redis {{ target_version }}
+    - name: Install Redis {{ redis_version }}
       shell: |
-        cd /tmp/redis-{{ target_version }}
-
+        cd /tmp/redis-{{ redis_version }}
         make install
-      args:
-        executable: /bin/bash
 
     - name: Restart Redis
       shell: |
-        nohup redis-server \
-          --port 6379 \
-          --cluster-enabled yes \
-          --cluster-config-file /var/lib/redis/nodes.conf \
-          --cluster-node-timeout 5000 \
-          --cluster-announce-ip {{ announce_ip }} \
-          --cluster-announce-port 6379 \
-          --cluster-announce-bus-port 16379 \
-          --appendonly yes \
-          --protected-mode no \
-          --bind 0.0.0.0 \
-          > /tmp/redis.log 2>&1 &
-      args:
-        executable: /bin/bash
+        nohup redis-server /etc/redis/redis.conf > /tmp/redis.log 2>&1 &
 
     - name: Wait for Redis to start
       wait_for:
-        host: "{{ announce_ip }}"
+        host: "{{ node_ip }}"
         port: 6379
         timeout: 30
 
     - name: Verify upgraded Redis version
       shell: redis-server --version | awk '{print $3}' | cut -d'=' -f2
-      register: redis_version_output
+      register: upgraded_version
 
     - name: Show upgraded version
       debug:
-        msg: "Node upgraded to Redis {{ redis_version_output.stdout }}"
+        msg: "Node upgraded to Redis {{ upgraded_version.stdout }}"
 
 - hosts: redis-node-1
+  become: yes
   gather_facts: no
 
   tasks:

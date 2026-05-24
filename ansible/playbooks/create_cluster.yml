@@ -2,6 +2,16 @@
   gather_facts: no
 
   tasks:
+
+    - name: Check current cluster state
+      shell: redis-cli cluster info | grep cluster_state | cut -d':' -f2
+      register: cluster_state
+      ignore_errors: yes
+
+    - name: Show current cluster state
+      debug:
+        msg: "Current cluster state: {{ cluster_state.stdout | default('not configured') }}"
+
     - name: Create Redis Cluster
       shell: |
         yes yes | redis-cli --cluster create \
@@ -12,3 +22,15 @@
         10.10.0.15:6379 \
         10.10.0.16:6379 \
         --cluster-replicas 1
+      when: cluster_state.stdout != "ok"
+      register: cluster_create
+
+    - name: Cluster already exists
+      debug:
+        msg: "Redis cluster already provisioned. Skipping cluster creation."
+      when: cluster_state.stdout == "ok"
+
+    - name: Show cluster creation output
+      debug:
+        var: cluster_create.stdout_lines
+      when: cluster_state.stdout != "ok"
