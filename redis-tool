@@ -1,36 +1,115 @@
 #!/bin/bash
+
 set -e
+
+check_prereqs() {
+
+  echo "Checking prerequisites..."
+
+  if command -v podman >/dev/null 2>&1; then
+    CONTAINER_RUNTIME="podman"
+  elif command -v docker >/dev/null 2>&1; then
+    CONTAINER_RUNTIME="docker"
+  else
+    echo "ERROR: Docker or Podman is required."
+    exit 1
+  fi
+
+  if ! command -v ansible >/dev/null 2>&1; then
+    echo "ERROR: Ansible 2.14+ is required."
+    exit 1
+  fi
+
+  ANSIBLE_VERSION=$(ansible --version | head -1 | awk '{print $3}')
+
+  echo "Container runtime: $CONTAINER_RUNTIME"
+  echo "Ansible version: $ANSIBLE_VERSION"
+
+  echo
+}
+
+run_playbook() {
+  cd ansible
+  ansible-playbook "$@"
+  cd ..
+}
+
 COMMAND=$1
+
+check_prereqs
 
 case $COMMAND in
 
   provision)
-    cd ansible
-    ansible-playbook playbooks/provision.yml
-    ansible-playbook playbooks/create_cluster.yml
+
+    echo "Provisioning Redis Cluster..."
+
+    run_playbook playbooks/provision.yml
+    run_playbook playbooks/create_cluster.yml
+
+    echo
+    echo "Final Cluster Topology:"
+    run_playbook playbooks/status.yml
     ;;
 
-  seed)
-    cd ansible
-    ansible-playbook playbooks/data_seed.yml
-    ;;
+  data)
 
-  verify)
-    cd ansible
-    ansible-playbook playbooks/data_verify.yml
+    SUBCOMMAND=$2
+
+    case $SUBCOMMAND in
+
+      seed)
+
+        echo "Seeding Redis data..."
+
+        run_playbook playbooks/data_seed.yml
+        ;;
+
+      verify)
+
+        if [ "$3" == "--full" ]; then
+
+          echo "Running full cluster verification..."
+
+          run_playbook playbooks/data_verify.yml
+          run_playbook playbooks/status.yml
+
+          echo
+          echo "FULL VERIFICATION COMPLETE"
+
+        else
+
+          echo "Running data verification..."
+
+          run_playbook playbooks/data_verify.yml
+
+        fi
+        ;;
+
+      *)
+
+        echo "Usage:"
+        echo "./redis-tool data seed"
+        echo "./redis-tool data verify"
+        echo "./redis-tool data verify --full"
+        exit 1
+        ;;
+
+    esac
     ;;
 
   status)
-    cd ansible
-    ansible-playbook playbooks/status.yml
+
+    run_playbook playbooks/status.yml
     ;;
 
   precheck)
-    cd ansible
-    ansible-playbook playbooks/upgrade_precheck.yml
+
+    run_playbook playbooks/upgrade_precheck.yml
     ;;
 
   failover)
+
     REPLICA=$2
 
     if [ -z "$REPLICA" ]; then
@@ -38,12 +117,12 @@ case $COMMAND in
       exit 1
     fi
 
-    cd ansible
-    ansible-playbook playbooks/failover.yml \
+    run_playbook playbooks/failover.yml \
       -e target_replica=$REPLICA
     ;;
 
   upgrade-node)
+
     NODE=$2
     IP=$3
     VERSION=$4
@@ -53,22 +132,112 @@ case $COMMAND in
       exit 1
     fi
 
-    cd ansible
-    ansible-playbook playbooks/upgrade_node.yml \
+    run_playbook playbooks/upgrade_node.yml \
       -e target_node=$NODE \
       -e node_ip=$IP \
       -e redis_version=$VERSION
     ;;
 
+  upgrade)
+
+    TARGET_VERSION=""
+    STRATEGY=""
+
+    shift
+
+    while [[ $# -gt 0 ]]; do
+
+      case $1 in
+
+        --target-version)
+          TARGET_VERSION="$2"
+          shift 2
+          ;;
+
+        --strategy)
+          STRATEGY="$2"
+          shift 2
+          ;;
+
+        *)
+          echo "Unknown option: $1"
+          exit 1
+          ;;
+
+      esac
+
+    done
+
+    if [ -z "$TARGET_VERSION" ] || [ -z "$STRATEGY" ]; then
+      echo "Usage:"
+      echo "./redis-tool upgrade --target-version 7.2.6 --strategy rolling"
+      exit 1
+    fi
+
+    if [ "$STRATEGY" != "rolling" ]; then
+      echo "Only rolling strategy is supported."
+      exit 1
+    fi
+
+    echo "Starting rolling upgrade to Redis $TARGET_VERSION"
+
+    echo
+    echo "[1/4] Running prechecks..."
+    ./redis-tool precheck
+
+    CURRENT_VERSION=$(cd ansible && ansible redis-node-1 -m shell -a "redis-server --version | awk '{print \$3}' | cut -d'=' -f2" | tail -1 | awk '{print $NF}')
+
+    if [ "$CURRENT_VERSION" = "$TARGET_VERSION" ]; then
+
+      echo
+      echo "Cluster already running Redis $TARGET_VERSION"
+      echo "Skipping rolling upgrade steps."
+
+    else
+
+      echo
+      echo "[2/4] Performing rolling replica-first upgrade..."
+
+      ./redis-tool upgrade-node redis-node-4 10.10.0.14 $TARGET_VERSION
+      ./redis-tool failover redis-node-4
+
+      ./redis-tool upgrade-node redis-node-5 10.10.0.15 $TARGET_VERSION
+      ./redis-tool failover redis-node-5
+
+      ./redis-tool upgrade-node redis-node-6 10.10.0.16 $TARGET_VERSION
+      ./redis-tool failover redis-node-6
+
+      ./redis-tool upgrade-node redis-node-1 10.10.0.11 $TARGET_VERSION
+      ./redis-tool upgrade-node redis-node-2 10.10.0.12 $TARGET_VERSION
+      ./redis-tool upgrade-node redis-node-3 10.10.0.13 $TARGET_VERSION
+
+    fi
+
+    echo
+    echo "[3/4] Running full verification..."
+    ./redis-tool data verify --full
+
+    echo
+    echo "[4/4] Final cluster status..."
+    ./redis-tool status
+
+    echo
+    echo "UPGRADE COMPLETE — all nodes upgraded to Redis $TARGET_VERSION"
+    ;;
+
   *)
+
     echo "Usage:"
     echo "./redis-tool provision"
-    echo "./redis-tool seed"
-    echo "./redis-tool verify"
+    echo "./redis-tool data seed"
+    echo "./redis-tool data verify"
+    echo "./redis-tool data verify --full"
     echo "./redis-tool status"
     echo "./redis-tool precheck"
     echo "./redis-tool failover <replica-node>"
     echo "./redis-tool upgrade-node <node> <ip> <version>"
+    echo "./redis-tool upgrade --target-version 7.2.6 --strategy rolling"
+    exit 1
     ;;
 
 esac

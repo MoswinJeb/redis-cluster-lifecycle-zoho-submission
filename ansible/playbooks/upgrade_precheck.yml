@@ -9,9 +9,6 @@
 - hosts: redis-node-1
   gather_facts: no
 
-  vars:
-    target_version: "7.2.6"
-
   tasks:
 
     - name: Check cluster state
@@ -20,7 +17,7 @@
 
     - name: Fail if cluster not healthy
       fail:
-        msg: "Cluster state is NOT ok"
+        msg: "Cluster state is not healthy"
       when: cluster_state.stdout != "ok"
 
     - name: Show cluster state
@@ -35,40 +32,7 @@
       debug:
         msg: "Current Redis version: {{ redis_version.stdout }}"
 
-    - name: Fail if already on target version
-      fail:
-        msg: "Cluster already running target version {{ target_version }}"
-      when: redis_version.stdout == target_version
-
-    - name: Verify cluster data integrity
-      shell: |
-        missing=0
-        mismatch=0
-
-        for i in $(seq -w 1 1000); do
-
-          key="key:$i"
-
-          expected=$(echo -n "$key" | sha256sum | awk '{print $1}')
-
-          actual=$(redis-cli -c -h 10.10.0.11 GET "$key")
-
-          if [ -z "$actual" ]; then
-            missing=$((missing+1))
-          elif [ "$actual" != "$expected" ]; then
-            mismatch=$((mismatch+1))
-          fi
-
-        done
-
-        if [ "$missing" -eq 0 ] && [ "$mismatch" -eq 0 ]; then
-          echo "PASS"
-        else
-          echo "FAIL missing=$missing mismatch=$mismatch"
-          exit 1
-        fi
-      register: verify_result
-
-    - name: Show verification result
+    - name: Show idempotent upgrade message
       debug:
-        msg: "Data verification: {{ verify_result.stdout }}"
+        msg: "Cluster already running target version 7.2.6"
+      when: redis_version.stdout == "7.2.6"
