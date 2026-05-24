@@ -1,3 +1,4 @@
+````markdown
 # Redis Cluster Automation using Ansible
 
 This project provisions, manages, monitors, and upgrades a 6-node Redis Cluster using Ansible and Docker Compose.
@@ -14,6 +15,7 @@ The solution includes:
 * Data seeding and verification
 * Cluster status reporting
 * Rolling upgrades with controlled failover
+* Replica promotion and topology transition
 * Persistent Redis auto-start inside containers
 
 ---
@@ -45,7 +47,7 @@ submission/
 │   └── authorized_keys
 ├── output/
 └── README.md
-```
+````
 
 ---
 
@@ -95,6 +97,8 @@ This command:
 * starts Redis services
 * creates the Redis Cluster topology
 
+The cluster creation step is idempotent and safely skips execution if the cluster is already initialized.
+
 ---
 
 ## Seed Cluster Data
@@ -120,6 +124,8 @@ Expected output:
 ```text
 PASS — 1000/1000 keys verified
 ```
+
+The verification playbook exits with a non-zero status if validation fails.
 
 ---
 
@@ -150,7 +156,7 @@ Performs:
 
 * cluster health validation
 * node reachability checks
-* version validation
+* Redis version checks
 * data verification baseline
 
 ---
@@ -164,7 +170,7 @@ Performs:
 Example:
 
 ```bash
-./redis-tool failover redis-node-5
+./redis-tool failover redis-node-6
 ```
 
 Promotes the specified replica to master.
@@ -183,7 +189,7 @@ Example:
 ./redis-tool upgrade-node redis-node-5 10.10.0.15 7.2.6
 ```
 
-Performs rolling node upgrade.
+Performs rolling node upgrade with post-upgrade cluster health validation.
 
 ---
 
@@ -193,13 +199,13 @@ The rolling upgrade was implemented using a replica-first strategy to maintain c
 
 Upgrade flow:
 
-1. Run pre-flight checks
+1. Run pre-flight validation checks
 2. Upgrade replica nodes one at a time
 3. Verify cluster health after each replica upgrade
 4. Trigger controlled failover to promote upgraded replicas
-5. Demote old masters into replicas
-6. Upgrade old masters safely
-7. Verify cluster topology and data integrity after every step
+5. Previous masters automatically become replicas
+6. Upgrade the remaining replica nodes safely
+7. Verify cluster topology and data integrity after every stage
 
 This strategy ensures:
 
@@ -208,20 +214,24 @@ This strategy ensures:
 * safe rolling upgrades
 * preserved data integrity throughout the process
 
+The final validated cluster state contains all six nodes running Redis 7.2.6.
+
 ---
 
 # Assumptions and Trade-offs
 
+Assumptions:
+
 * The environment runs inside isolated Docker containers
 * Redis nodes communicate over Docker bridge networking
 * Redis binaries are installed from source
-* Authentication and TLS were not enabled because the environment is intended for local testing and demonstration
-* Redis auto-start is configured inside containers using a startup script
+* The environment is intended for local testing and operational demonstration
 
 Trade-offs:
 
 * Simplicity and reproducibility were prioritized over production-grade hardening
-* Shell-based Redis CLI parsing was used instead of structured APIs for faster implementation
+* Redis CLI shell parsing was used instead of structured APIs for faster implementation
+* Rolling upgrades are orchestrated through redis-tool commands rather than a single end-to-end automated workflow
 
 ---
 
@@ -229,6 +239,7 @@ Trade-offs:
 
 * Cluster topology and data are not persisted across full container rebuilds (`docker compose up --build`) because persistent Docker volumes were not configured
 * Redis CLI output parsing is shell-based and may not be as robust as API-driven observability solutions
+* TLS and AUTH were intentionally not configured because the environment is designed for local development/testing
 * Podman runtime was not fully validated, although the compose-based infrastructure can be adapted for Podman Compose
 
 ---
@@ -239,11 +250,14 @@ Successfully validated:
 
 * Redis cluster provisioning
 * Cluster topology creation
-* Data seeding and verification
+* Deterministic data seeding
+* Strict data integrity verification
 * Cluster status reporting
-* Rolling upgrades
+* Replica-first rolling upgrades
 * Controlled failover
 * Replica promotion
+* Mixed-version cluster operation during upgrade
+* Full cluster upgrade to Redis 7.2.6
 * Cluster recovery after restart
 * Persistent Redis auto-start inside containers
 
@@ -264,3 +278,6 @@ Files include:
 * status_output.txt
 * upgrade_output.txt
 * verify_output.txt
+
+```
+```

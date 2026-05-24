@@ -1,65 +1,54 @@
-===== PRECHECK =====
-
-PLAY [redis] *******************************************************************
-
-TASK [Verify all nodes reachable] **********************************************
-ok: [redis-node-2]
-ok: [redis-node-4]
-ok: [redis-node-5]
-ok: [redis-node-3]
-ok: [redis-node-1]
-ok: [redis-node-6]
+===== INITIAL STATUS =====
 
 PLAY [redis-node-1] ************************************************************
 
-TASK [Check cluster state] *****************************************************
+TASK [Get cluster state] *******************************************************
 changed: [redis-node-1]
 
-TASK [Fail if cluster not healthy] *********************************************
-skipping: [redis-node-1]
-
-TASK [Show cluster state] ******************************************************
+TASK [Print cluster state] *****************************************************
 ok: [redis-node-1] => {
-    "msg": "Cluster state verified: ok"
+    "msg": "Cluster State: ok"
 }
 
-TASK [Get current Redis version] ***********************************************
+TASK [Print masters] ***********************************************************
 changed: [redis-node-1]
 
-TASK [Show current Redis version] **********************************************
+TASK [Show masters] ************************************************************
 ok: [redis-node-1] => {
-    "msg": "Current Redis version: 7.0.15"
+    "masters_output.stdout_lines": [
+        "MASTERS",
+        "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383 keys: 343 mem: 1.83M",
+        "10.10.0.12:6379 [master] v7.0.15 slots: 5461-10922 keys: 324 mem: 1.80M",
+        "10.10.0.15:6379 [master] v7.0.15 slots: 0-5460 keys: 333 mem: 1.83M"
+    ]
 }
 
-TASK [Fail if already on target version] ***************************************
-skipping: [redis-node-1]
-
-TASK [Verify cluster data integrity] *******************************************
+TASK [Print replicas] **********************************************************
 changed: [redis-node-1]
 
-TASK [Show verification result] ************************************************
+TASK [Show replicas] ***********************************************************
 ok: [redis-node-1] => {
-    "msg": "Data verification: PASS"
+    "replicas_output.stdout_lines": [
+        "REPLICAS",
+        "10.10.0.11:6379 [replica] v7.2.6 replicating: 10.10.0.15:6379 mem: 1.74M",
+        "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 mem: 1.69M",
+        "10.10.0.16:6379 [replica] v7.2.6 replicating: 10.10.0.12:6379 mem: 1.69M"
+    ]
 }
 
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=7    changed=3    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
-redis-node-2               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-3               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-4               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-5               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-6               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-1               : ok=6    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 
-===== FAILOVER =====
+===== FAILOVER REDIS-NODE-6 =====
 
-PLAY [redis-node-3] ************************************************************
+PLAY [redis-node-6] ************************************************************
 
 TASK [Trigger manual failover] *************************************************
-changed: [redis-node-3]
+changed: [redis-node-6]
 
 TASK [Show failover result] ****************************************************
-ok: [redis-node-3] => {
+ok: [redis-node-6] => {
     "failover_output.stdout_lines": [
         "OK"
     ]
@@ -86,25 +75,21 @@ changed: [redis-node-1]
 TASK [Print cluster topology] **************************************************
 ok: [redis-node-1] => {
     "cluster_nodes.stdout_lines": [
-        "6c46a6e911a84b509e14dd74bd11f25cb581c396 10.10.0.12:6379@16379 master - 0 1779652752000 2 connected 5461-10922",
-        "47dc586b0717dd6e6e784daca1b711c5afc91bb6 10.10.0.14:6379@16379 master - 0 1779652753055 10 connected 10923-16383",
-        "5e16737d9fe8b1e2cd02ea7de3ee2b023e7934b1 10.10.0.11:6379@16379 myself,slave 24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 0 1779652753000 7 connected",
-        "327b8f6d37480e77c37439c6feecff3801e943ac 10.10.0.13:6379@16379 slave 47dc586b0717dd6e6e784daca1b711c5afc91bb6 0 1779652752050 10 connected",
-        "33c3b52af0f3af6d541e68f770b1b30551e8385e 10.10.0.16:6379@16379 slave 6c46a6e911a84b509e14dd74bd11f25cb581c396 0 1779652754060 2 connected",
-        "24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 10.10.0.15:6379@16379 master - 0 1779652753558 7 connected 0-5460"
+        "47dc586b0717dd6e6e784daca1b711c5afc91bb6 10.10.0.14:6379@16379 master - 0 1779655411097 10 connected 10923-16383",
+        "6c46a6e911a84b509e14dd74bd11f25cb581c396 10.10.0.12:6379@16379 slave 33c3b52af0f3af6d541e68f770b1b30551e8385e 0 1779655411000 11 connected",
+        "5e16737d9fe8b1e2cd02ea7de3ee2b023e7934b1 10.10.0.11:6379@16379 myself,slave 24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 0 1779655411000 7 connected",
+        "327b8f6d37480e77c37439c6feecff3801e943ac 10.10.0.13:6379@16379 slave 47dc586b0717dd6e6e784daca1b711c5afc91bb6 0 1779655412705 10 connected",
+        "33c3b52af0f3af6d541e68f770b1b30551e8385e 10.10.0.16:6379@16379 master - 0 1779655412000 11 connected 5461-10922",
+        "24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 10.10.0.15:6379@16379 master - 0 1779655411701 7 connected 0-5460"
     ]
 }
 
 PLAY RECAP *********************************************************************
 redis-node-1               : ok=5    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-3               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-6               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 
-===== DIRECT VERSION CHECK =====
-redis-node-4 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=7f3a16c2144be07
-
-===== FINAL STATUS =====
+===== STATUS AFTER NODE-6 FAILOVER =====
 
 PLAY [redis-node-1] ************************************************************
 
@@ -123,8 +108,8 @@ TASK [Show masters] ************************************************************
 ok: [redis-node-1] => {
     "masters_output.stdout_lines": [
         "MASTERS",
-        "10.10.0.12:6379 [master] v7.0.15 slots: 5461-10922 keys: 324 mem: 1.80M",
-        "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383 keys: 343 mem: 1.81M",
+        "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383 keys: 343 mem: 1.83M",
+        "10.10.0.16:6379 [master] v7.2.6 slots: 5461-10922 keys: 324 mem: 1.81M",
         "10.10.0.15:6379 [master] v7.0.15 slots: 0-5460 keys: 333 mem: 1.83M"
     ]
 }
@@ -136,9 +121,9 @@ TASK [Show replicas] ***********************************************************
 ok: [redis-node-1] => {
     "replicas_output.stdout_lines": [
         "REPLICAS",
-        "10.10.0.11:6379 [replica] v7.0.15 replicating: 10.10.0.15:6379 mem: 1.81M",
-        "10.10.0.13:6379 [replica] v7.0.15 replicating: 10.10.0.14:6379 mem: 1.74M",
-        "10.10.0.16:6379 [replica] v7.0.15 replicating: 10.10.0.12:6379 mem: 1.69M"
+        "10.10.0.12:6379 [replica] v7.0.15 replicating: 10.10.0.16:6379 mem: 1.78M",
+        "10.10.0.11:6379 [replica] v7.2.6 replicating: 10.10.0.15:6379 mem: 1.74M",
+        "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 mem: 1.69M"
     ]
 }
 
@@ -146,7 +131,139 @@ PLAY RECAP *********************************************************************
 redis-node-1               : ok=6    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 
-===== DATA VERIFY =====
+===== FAILOVER REDIS-NODE-1 =====
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Trigger manual failover] *************************************************
+changed: [redis-node-1]
+
+TASK [Show failover result] ****************************************************
+ok: [redis-node-1] => {
+    "failover_output.stdout_lines": [
+        "OK"
+    ]
+}
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Wait for cluster stabilization] ******************************************
+Pausing for 10 seconds
+(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)
+ok: [redis-node-1]
+
+TASK [Verify cluster state] ****************************************************
+changed: [redis-node-1]
+
+TASK [Show cluster state] ******************************************************
+ok: [redis-node-1] => {
+    "msg": "Cluster state after failover: ok"
+}
+
+TASK [Show cluster topology] ***************************************************
+changed: [redis-node-1]
+
+TASK [Print cluster topology] **************************************************
+ok: [redis-node-1] => {
+    "cluster_nodes.stdout_lines": [
+        "47dc586b0717dd6e6e784daca1b711c5afc91bb6 10.10.0.14:6379@16379 master - 0 1779655426776 10 connected 10923-16383",
+        "6c46a6e911a84b509e14dd74bd11f25cb581c396 10.10.0.12:6379@16379 slave 33c3b52af0f3af6d541e68f770b1b30551e8385e 0 1779655426000 11 connected",
+        "5e16737d9fe8b1e2cd02ea7de3ee2b023e7934b1 10.10.0.11:6379@16379 myself,master - 0 1779655423000 12 connected 0-5460",
+        "327b8f6d37480e77c37439c6feecff3801e943ac 10.10.0.13:6379@16379 slave 47dc586b0717dd6e6e784daca1b711c5afc91bb6 0 1779655425771 10 connected",
+        "33c3b52af0f3af6d541e68f770b1b30551e8385e 10.10.0.16:6379@16379 master - 0 1779655426575 11 connected 5461-10922",
+        "24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 10.10.0.15:6379@16379 slave 5e16737d9fe8b1e2cd02ea7de3ee2b023e7934b1 0 1779655426000 12 connected"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=7    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+===== STATUS AFTER NODE-1 FAILOVER =====
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Get cluster state] *******************************************************
+changed: [redis-node-1]
+
+TASK [Print cluster state] *****************************************************
+ok: [redis-node-1] => {
+    "msg": "Cluster State: ok"
+}
+
+TASK [Print masters] ***********************************************************
+changed: [redis-node-1]
+
+TASK [Show masters] ************************************************************
+ok: [redis-node-1] => {
+    "masters_output.stdout_lines": [
+        "MASTERS",
+        "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383 keys: 343 mem: 1.83M",
+        "10.10.0.11:6379 [master] v7.2.6 slots: 0-5460 keys: 333 mem: 1.85M",
+        "10.10.0.16:6379 [master] v7.2.6 slots: 5461-10922 keys: 324 mem: 1.81M"
+    ]
+}
+
+TASK [Print replicas] **********************************************************
+changed: [redis-node-1]
+
+TASK [Show replicas] ***********************************************************
+ok: [redis-node-1] => {
+    "replicas_output.stdout_lines": [
+        "REPLICAS",
+        "10.10.0.12:6379 [replica] v7.0.15 replicating: 10.10.0.16:6379 mem: 1.78M",
+        "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 mem: 1.69M",
+        "10.10.0.15:6379 [replica] v7.0.15 replicating: 10.10.0.11:6379 mem: 1.81M"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=6    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+===== FINAL ALL-NODES-UPGRADED STATUS =====
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Get cluster state] *******************************************************
+changed: [redis-node-1]
+
+TASK [Print cluster state] *****************************************************
+ok: [redis-node-1] => {
+    "msg": "Cluster State: ok"
+}
+
+TASK [Print masters] ***********************************************************
+changed: [redis-node-1]
+
+TASK [Show masters] ************************************************************
+ok: [redis-node-1] => {
+    "masters_output.stdout_lines": [
+        "MASTERS",
+        "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383 keys: 343 mem: 1.83M",
+        "10.10.0.11:6379 [master] v7.2.6 slots: 0-5460 keys: 333 mem: 1.85M",
+        "10.10.0.16:6379 [master] v7.2.6 slots: 5461-10922 keys: 324 mem: 1.81M"
+    ]
+}
+
+TASK [Print replicas] **********************************************************
+changed: [redis-node-1]
+
+TASK [Show replicas] ***********************************************************
+ok: [redis-node-1] => {
+    "replicas_output.stdout_lines": [
+        "REPLICAS",
+        "10.10.0.12:6379 [replica] v7.2.6 replicating: 10.10.0.16:6379 mem: 1.69M",
+        "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 mem: 1.69M",
+        "10.10.0.15:6379 [replica] v7.2.6 replicating: 10.10.0.11:6379 mem: 1.69M"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=6    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+===== FINAL DATA VERIFICATION =====
 
 PLAY [redis-node-1] ************************************************************
 

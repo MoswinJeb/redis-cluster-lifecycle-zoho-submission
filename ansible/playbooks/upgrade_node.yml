@@ -50,7 +50,18 @@
 
     - name: Restart Redis
       shell: |
-        nohup redis-server /etc/redis/redis.conf > /tmp/redis.log 2>&1 &
+        nohup redis-server \
+          --port 6379 \
+          --protected-mode no \
+          --cluster-enabled yes \
+          --cluster-config-file /var/lib/redis/nodes.conf \
+          --cluster-node-timeout 5000 \
+          --cluster-announce-ip {{ node_ip }} \
+          --cluster-announce-port 6379 \
+          --cluster-announce-bus-port 16379 \
+          --appendonly yes \
+          --bind 0.0.0.0 \
+          > /tmp/redis.log 2>&1 &
 
     - name: Wait for Redis to start
       wait_for:
@@ -75,6 +86,11 @@
     - name: Verify cluster state after upgrade
       shell: redis-cli cluster info | grep cluster_state | cut -d':' -f2
       register: cluster_state
+
+    - name: Fail if cluster unhealthy
+      fail:
+        msg: "Cluster state is not ok after upgrade"
+      when: cluster_state.stdout != "ok"
 
     - name: Show cluster state
       debug:
