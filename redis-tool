@@ -2,6 +2,8 @@
 
 set -e
 
+mkdir -p logs
+
 check_prereqs() {
 
   echo "Checking prerequisites..."
@@ -49,7 +51,19 @@ run_playbook() {
   cd ..
 }
 
+log_event() {
+
+  TIMESTAMP=$(date -Iseconds)
+
+  echo "$TIMESTAMP | $1 | $2" >> logs/operations.log
+
+}
+
 COMMAND=$1
+
+FULL_COMMAND="$*"
+
+trap 'log_event "$FULL_COMMAND" "FAILED"' ERR
 
 check_prereqs
 
@@ -174,7 +188,7 @@ case $COMMAND in
       *)
 
         echo "Usage:"
-        echo "./redis-tool data seed"
+        echo "./redis-tool data seed --keys 1000"
         echo "./redis-tool data verify"
         echo "./redis-tool data verify --full"
         exit 1
@@ -362,10 +376,11 @@ case $COMMAND in
       ./redis-tool upgrade-node redis-node-3 10.10.0.13 $TARGET_VERSION
 
     fi
-    echo 
+
+    echo
     echo "Waiting for synchronization..."
     sleep 15
-   
+
     echo
     echo "[5/6] Running full verification..."
     ./redis-tool verify --full
@@ -394,3 +409,5 @@ case $COMMAND in
     ;;
 
 esac
+
+log_event "$FULL_COMMAND" "SUCCESS"
