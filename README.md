@@ -341,7 +341,7 @@ Example captures under `output/`:
 | S2 — Scale in | Not implemented |
 | S3 — Rollback | Not implemented |
 | S4 — Idempotency | **Implemented** (provision cluster create, upgrade skip at target version) |
-| S5 — Structured logging | **Partial** — `logs/operations.log` with timestamp, command, outcome |
+| S5 — Structured logging | **Implemented** — `logs/operations.log` with timestamp, command, outcome |
 
 ---
 
