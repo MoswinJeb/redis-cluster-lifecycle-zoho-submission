@@ -25,6 +25,18 @@ check_prereqs() {
 
   ANSIBLE_VERSION=$(ansible --version | head -1 | awk '{print $3}' | tr -d ']')
 
+  ANSIBLE_MAJOR=$(echo $ANSIBLE_VERSION | cut -d'.' -f1)
+  ANSIBLE_MINOR=$(echo $ANSIBLE_VERSION | cut -d'.' -f2)
+
+  if [ "$ANSIBLE_MAJOR" -lt 2 ] || \
+     { [ "$ANSIBLE_MAJOR" -eq 2 ] && [ "$ANSIBLE_MINOR" -lt 14 ]; }; then
+
+    echo "ERROR: Ansible 2.14+ is required."
+    echo "Detected version: $ANSIBLE_VERSION"
+    exit 1
+
+  fi
+
   echo "✓ Container runtime found: $CONTAINER_RUNTIME"
   echo "✓ Ansible version found: $ANSIBLE_VERSION"
 
@@ -369,8 +381,8 @@ case $COMMAND in
   *)
 
     echo "Usage:"
-    echo "./redis-tool provision"
-    echo "./redis-tool data seed"
+    echo "./redis-tool provision --version 7.0.15 --masters 3 --replicas-per-master 1"
+    echo "./redis-tool data seed --keys 1000"
     echo "./redis-tool data verify"
     echo "./redis-tool verify --full"
     echo "./redis-tool status"

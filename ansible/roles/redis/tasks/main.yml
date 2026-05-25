@@ -11,24 +11,24 @@
 
 - name: Download Redis source
   get_url:
-    url: "https://download.redis.io/releases/redis-7.0.15.tar.gz"
-    dest: /tmp/redis-7.0.15.tar.gz
+    url: "https://download.redis.io/releases/redis-{{ redis_version }}.tar.gz"
+    dest: "/tmp/redis-{{ redis_version }}.tar.gz"
 
 - name: Extract Redis source
   unarchive:
-    src: /tmp/redis-7.0.15.tar.gz
+    src: "/tmp/redis-{{ redis_version }}.tar.gz"
     dest: /tmp/
     remote_src: yes
 
 - name: Build Redis
   command: make
   args:
-    chdir: /tmp/redis-7.0.15
+    chdir: "/tmp/redis-{{ redis_version }}"
 
 - name: Install Redis
   command: make install
   args:
-    chdir: /tmp/redis-7.0.15
+    chdir: "/tmp/redis-{{ redis_version }}"
   become: yes
 
 - name: Create Redis data directory
@@ -45,5 +45,9 @@
   become: yes
 
 - name: Start Redis server
-  shell: redis-server /etc/redis.conf
+  shell: |
+    pkill redis-server || true
+
+    nohup redis-server /etc/redis.conf \
+      > /tmp/redis.log 2>&1 &
   become: yes

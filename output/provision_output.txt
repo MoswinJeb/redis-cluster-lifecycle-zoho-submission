@@ -10,84 +10,84 @@ Replicas per master: 1
 PLAY [redis] *******************************************************************
 
 TASK [Gathering Facts] *********************************************************
-ok: [redis-node-4]
-ok: [redis-node-5]
 ok: [redis-node-3]
-ok: [redis-node-2]
 ok: [redis-node-1]
+ok: [redis-node-2]
+ok: [redis-node-5]
+ok: [redis-node-4]
 ok: [redis-node-6]
 
 TASK [redis : Install Redis build dependencies] ********************************
-ok: [redis-node-1]
-ok: [redis-node-2]
-ok: [redis-node-3]
-ok: [redis-node-4]
-ok: [redis-node-5]
-ok: [redis-node-6]
-
-TASK [redis : Download Redis source] *******************************************
-ok: [redis-node-1]
-ok: [redis-node-5]
-ok: [redis-node-3]
-ok: [redis-node-4]
-ok: [redis-node-2]
-ok: [redis-node-6]
-
-TASK [redis : Extract Redis source] ********************************************
-ok: [redis-node-2]
-ok: [redis-node-3]
-ok: [redis-node-1]
-ok: [redis-node-4]
-ok: [redis-node-5]
-ok: [redis-node-6]
-
-TASK [redis : Build Redis] *****************************************************
+changed: [redis-node-4]
 changed: [redis-node-5]
 changed: [redis-node-1]
+changed: [redis-node-3]
+changed: [redis-node-2]
+changed: [redis-node-6]
+
+TASK [redis : Download Redis source] *******************************************
+changed: [redis-node-3]
+changed: [redis-node-1]
+changed: [redis-node-4]
+changed: [redis-node-5]
+changed: [redis-node-2]
+changed: [redis-node-6]
+
+TASK [redis : Extract Redis source] ********************************************
 changed: [redis-node-2]
 changed: [redis-node-3]
+changed: [redis-node-5]
+changed: [redis-node-4]
+changed: [redis-node-1]
+changed: [redis-node-6]
+
+TASK [redis : Build Redis] *****************************************************
+changed: [redis-node-3]
+changed: [redis-node-1]
+changed: [redis-node-5]
+changed: [redis-node-2]
 changed: [redis-node-4]
 changed: [redis-node-6]
 
 TASK [redis : Install Redis] ***************************************************
-changed: [redis-node-3]
 changed: [redis-node-1]
+changed: [redis-node-2]
 changed: [redis-node-5]
 changed: [redis-node-4]
-changed: [redis-node-2]
+changed: [redis-node-3]
 changed: [redis-node-6]
 
 TASK [redis : Create Redis data directory] *************************************
 ok: [redis-node-3]
-ok: [redis-node-5]
 ok: [redis-node-2]
-ok: [redis-node-4]
 ok: [redis-node-1]
+ok: [redis-node-5]
+ok: [redis-node-4]
 ok: [redis-node-6]
 
 TASK [redis : Copy Redis configuration] ****************************************
-ok: [redis-node-1]
-ok: [redis-node-2]
-ok: [redis-node-5]
-ok: [redis-node-3]
-ok: [redis-node-4]
-ok: [redis-node-6]
-
-TASK [redis : Start Redis server] **********************************************
+changed: [redis-node-4]
 changed: [redis-node-2]
 changed: [redis-node-3]
-changed: [redis-node-4]
+changed: [redis-node-5]
 changed: [redis-node-1]
+changed: [redis-node-6]
+
+TASK [redis : Start Redis server] **********************************************
+changed: [redis-node-1]
+changed: [redis-node-4]
+changed: [redis-node-2]
+changed: [redis-node-3]
 changed: [redis-node-5]
 changed: [redis-node-6]
 
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-2               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-3               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-4               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-5               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-6               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-1               : ok=9    changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-2               : ok=9    changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-3               : ok=9    changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-4               : ok=9    changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-5               : ok=9    changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-6               : ok=9    changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 
 PLAY [redis-node-1] ************************************************************
@@ -97,22 +97,71 @@ changed: [redis-node-1]
 
 TASK [Show current cluster state] **********************************************
 ok: [redis-node-1] => {
-    "msg": "Current cluster state: ok"
+    "msg": "Current cluster state: fail"
 }
 
 TASK [Create Redis Cluster] ****************************************************
-skipping: [redis-node-1]
+changed: [redis-node-1]
 
 TASK [Cluster already exists] **************************************************
-ok: [redis-node-1] => {
-    "msg": "Redis cluster already provisioned. Skipping cluster creation."
-}
-
-TASK [Show cluster creation output] ********************************************
 skipping: [redis-node-1]
 
+TASK [Show cluster creation output] ********************************************
+ok: [redis-node-1] => {
+    "cluster_create.stdout_lines": [
+        "\u001b[29;1m>>> Performing hash slots allocation on 6 nodes...",
+        "\u001b[0mMaster[0] -> Slots 0 - 5460",
+        "Master[1] -> Slots 5461 - 10922",
+        "Master[2] -> Slots 10923 - 16383",
+        "Adding replica 10.10.0.15:6379 to 10.10.0.11:6379",
+        "Adding replica 10.10.0.16:6379 to 10.10.0.12:6379",
+        "Adding replica 10.10.0.14:6379 to 10.10.0.13:6379",
+        "M: 1cb2c4cbee4a106523cdb6e5705f4794d514f24c 10.10.0.11:6379",
+        "   slots:[0-5460] (5461 slots) master",
+        "M: 218e5cc3b9e969ab1556998317e7532d1844dbca 10.10.0.12:6379",
+        "   slots:[5461-10922] (5462 slots) master",
+        "M: 34de0484e71998b4a53f4be380a977c2ad3e9468 10.10.0.13:6379",
+        "   slots:[10923-16383] (5461 slots) master",
+        "S: 0ee9d56f46dd366fa54c27d69188e527e3af1410 10.10.0.14:6379",
+        "   replicates 34de0484e71998b4a53f4be380a977c2ad3e9468",
+        "S: 37353e375bb32bf34f34fcc79d6d513845918362 10.10.0.15:6379",
+        "   replicates 1cb2c4cbee4a106523cdb6e5705f4794d514f24c",
+        "S: 3cbdb432991926d734c5270ae31502ba941db42a 10.10.0.16:6379",
+        "   replicates 218e5cc3b9e969ab1556998317e7532d1844dbca",
+        "Can I set the above configuration? (type 'yes' to accept): \u001b[29;1m>>> Nodes configuration updated",
+        "\u001b[0m\u001b[29;1m>>> Assign a different config epoch to each node",
+        "\u001b[0m\u001b[29;1m>>> Sending CLUSTER MEET messages to join the cluster",
+        "\u001b[0mWaiting for the cluster to join",
+        ".",
+        "\u001b[29;1m>>> Performing Cluster Check (using node 10.10.0.11:6379)",
+        "\u001b[0mM: 1cb2c4cbee4a106523cdb6e5705f4794d514f24c 10.10.0.11:6379",
+        "   slots:[0-5460] (5461 slots) master",
+        "   1 additional replica(s)",
+        "S: 3cbdb432991926d734c5270ae31502ba941db42a 10.10.0.16:6379",
+        "   slots: (0 slots) slave",
+        "   replicates 218e5cc3b9e969ab1556998317e7532d1844dbca",
+        "M: 34de0484e71998b4a53f4be380a977c2ad3e9468 10.10.0.13:6379",
+        "   slots:[10923-16383] (5461 slots) master",
+        "   1 additional replica(s)",
+        "S: 0ee9d56f46dd366fa54c27d69188e527e3af1410 10.10.0.14:6379",
+        "   slots: (0 slots) slave",
+        "   replicates 34de0484e71998b4a53f4be380a977c2ad3e9468",
+        "S: 37353e375bb32bf34f34fcc79d6d513845918362 10.10.0.15:6379",
+        "   slots: (0 slots) slave",
+        "   replicates 1cb2c4cbee4a106523cdb6e5705f4794d514f24c",
+        "M: 218e5cc3b9e969ab1556998317e7532d1844dbca 10.10.0.12:6379",
+        "   slots:[5461-10922] (5462 slots) master",
+        "   1 additional replica(s)",
+        "\u001b[32;1m[OK] All nodes agree about slots configuration.",
+        "\u001b[0m\u001b[29;1m>>> Check for open slots...",
+        "\u001b[0m\u001b[29;1m>>> Check slots coverage...",
+        "\u001b[0m\u001b[32;1m[OK] All 16384 slots covered.",
+        "\u001b[0m"
+    ]
+}
+
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=3    changed=1    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+redis-node-1               : ok=4    changed=2    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
 
 
 Final Cluster Topology:
@@ -124,7 +173,7 @@ changed: [redis-node-1]
 
 TASK [Print cluster state] *****************************************************
 ok: [redis-node-1] => {
-    "msg": "Cluster State: ok"
+    "msg": "Cluster State: fail"
 }
 
 TASK [Print masters] ***********************************************************
@@ -134,9 +183,9 @@ TASK [Show masters] ************************************************************
 ok: [redis-node-1] => {
     "masters_output.stdout_lines": [
         "MASTERS",
-        "10.10.0.15:6379 [master] v7.2.6 slots: 0-5460 keys: 333 mem: 1.89M",
-        "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383 keys: 343 mem: 1.89M",
-        "10.10.0.16:6379 [master] v7.2.6 slots: 5461-10922 keys: 324 mem: 1.89M"
+        "10.10.0.13:6379 [master] v7.0.15 slots: 10923-16383 keys: 0 mem: 1.83M",
+        "10.10.0.11:6379 [master] v7.0.15 slots: 0-5460 keys: 0 mem: 1.80M",
+        "10.10.0.12:6379 [master] v7.0.15 slots: 5461-10922 keys: 0 mem: 1.83M"
     ]
 }
 
@@ -147,9 +196,9 @@ TASK [Show replicas] ***********************************************************
 ok: [redis-node-1] => {
     "replicas_output.stdout_lines": [
         "REPLICAS",
-        "10.10.0.11:6379 [replica] v7.2.6 replicating: 10.10.0.15:6379 mem: 1.87M",
-        "10.10.0.12:6379 [replica] v7.2.6 replicating: 10.10.0.16:6379 mem: 1.80M",
-        "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 mem: 1.80M"
+        "10.10.0.16:6379 [replica] v7.0.15 replicating: 10.10.0.12:6379 mem: 1.73M",
+        "10.10.0.14:6379 [replica] v7.0.15 replicating: 10.10.0.13:6379 mem: 1.73M",
+        "10.10.0.15:6379 [replica] v7.0.15 replicating: 10.10.0.11:6379 mem: 1.74M"
     ]
 }
 
