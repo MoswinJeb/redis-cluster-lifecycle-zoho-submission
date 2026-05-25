@@ -3,15 +3,23 @@ Checking prerequisites...
 ✓ Ansible version found: 2.16.3
 
 Seeding Redis data...
+Key count: 1000
 
 PLAY [redis-node-1] ************************************************************
 
-TASK [Seed 1000 deterministic keys into Redis Cluster] *************************
+TASK [Seed deterministic keys into Redis Cluster] ******************************
 changed: [redis-node-1]
 
 TASK [Print seed result] *******************************************************
 ok: [redis-node-1] => {
-    "seed_output.stdout": "Inserted 1000 keys into Redis Cluster"
+    "seed_output.stdout_lines": [
+        "Inserted 1000 keys into Redis Cluster",
+        "",
+        "Key distribution across masters:",
+        "10.10.0.11 => 333 keys",
+        "10.10.0.12 => 324 keys",
+        "10.10.0.13 => 343 keys"
+    ]
 }
 
 PLAY RECAP *********************************************************************

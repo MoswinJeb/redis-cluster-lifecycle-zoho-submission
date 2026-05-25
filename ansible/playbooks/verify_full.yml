@@ -18,31 +18,57 @@
 
     - name: Verify all 16384 slots covered
       shell: |
-        redis-cli cluster slots | wc -l
-      register: slot_count
+        redis-cli cluster nodes | grep master | awk '{for(i=9;i<=NF;i++) print $i}' \
+        | awk -F- '
+        BEGIN {count=0}
+        {
+          if ($1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/)
+            count += ($2 - $1 + 1)
+        }
+        END {print count}'
+      register: slot_total
 
-    - name: Fail if slots missing
+    - name: Fail if slot coverage incomplete
       fail:
-        msg: "FAIL — cluster slot coverage incomplete"
-      when: slot_count.stdout | int < 3
+        msg: "FAIL — expected 16384 slots, found {{ slot_total.stdout }}"
+      when: slot_total.stdout | int != 16384
 
     - name: Show slot coverage
       debug:
-        msg: "PASS — cluster slots assigned"
+        msg: "PASS — all 16384 slots assigned"
 
-    - name: Check replica links
+    - name: Verify replica link health
       shell: |
-        redis-cli cluster nodes | grep slave
-      register: replica_links
+        unhealthy=0
 
-    - name: Fail if replicas missing
+        for ip in 10.10.0.11 10.10.0.12 10.10.0.13 10.10.0.14 10.10.0.15 10.10.0.16
+        do
+
+          role=$(redis-cli -h $ip INFO replication | grep role | cut -d':' -f2 | tr -d '\r')
+
+          if [ "$role" = "slave" ]; then
+
+            status=$(redis-cli -h $ip INFO replication | grep master_link_status | cut -d':' -f2 | tr -d '\r')
+
+            if [ "$status" != "up" ]; then
+              unhealthy=$((unhealthy+1))
+            fi
+
+          fi
+
+        done
+
+        echo $unhealthy
+      register: replica_health
+
+    - name: Fail if replica links unhealthy
       fail:
-        msg: "FAIL — replica topology unhealthy"
-      when: replica_links.stdout == ""
+        msg: "FAIL — one or more replica links unhealthy"
+      when: replica_health.stdout | int != 0
 
-    - name: Show replica topology
+    - name: Show replica health
       debug:
-        msg: "PASS — replicas connected"
+        msg: "PASS — all replica links healthy"
 
     - name: Collect Redis versions
       shell: |
@@ -61,27 +87,43 @@
       debug:
         msg: "PASS — all nodes running Redis {{ versions.stdout }}"
 
-    - name: Run existing data verification
+    - name: Verify deterministic Redis data integrity
       shell: |
-        count=0
+        missing=0
+        mismatch=0
 
         for i in $(seq -w 1 1000)
         do
-          value=$(redis-cli -c GET key:$i)
 
-          if [ -n "$value" ]; then
-            count=$((count+1))
+          key="key:$i"
+
+          expected=$(echo -n "$key" | sha256sum | awk '{print $1}')
+
+          actual=$(redis-cli -c -h 10.10.0.11 GET "$key")
+
+          if [ -z "$actual" ]; then
+
+            missing=$((missing+1))
+
+          elif [ "$actual" != "$expected" ]; then
+
+            mismatch=$((mismatch+1))
+
           fi
+
         done
 
-        if [ "$count" -eq 1000 ]; then
+        if [ "$missing" -eq 0 ] && [ "$mismatch" -eq 0 ]; then
+
           echo "PASS — 1000/1000 keys verified"
+
         else
-          echo "FAIL — verified $count/1000 keys"
+
+          echo "FAIL — missing=$missing mismatch=$mismatch"
           exit 1
+
         fi
       register: verify_result
-
 
     - name: Show data verification
       debug:

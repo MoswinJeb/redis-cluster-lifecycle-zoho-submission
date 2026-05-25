@@ -13,11 +13,11 @@ Checking prerequisites...
 PLAY [redis] *******************************************************************
 
 TASK [Verify all nodes reachable] **********************************************
-ok: [redis-node-1]
-ok: [redis-node-3]
-ok: [redis-node-5]
 ok: [redis-node-2]
+ok: [redis-node-3]
 ok: [redis-node-4]
+ok: [redis-node-5]
+ok: [redis-node-1]
 ok: [redis-node-6]
 
 PLAY [redis-node-1] ************************************************************
@@ -33,19 +33,29 @@ ok: [redis-node-1] => {
     "msg": "Cluster state verified: ok"
 }
 
+TASK [Verify deterministic Redis data] *****************************************
+changed: [redis-node-1]
+
+TASK [Show data verification result] *******************************************
+ok: [redis-node-1] => {
+    "verify_output.stdout": "PASS — 1000/1000 keys verified"
+}
+
 TASK [Get current Redis version] ***********************************************
 changed: [redis-node-1]
 
 TASK [Show current Redis version] **********************************************
 ok: [redis-node-1] => {
-    "msg": "Current Redis version: 7.0.15"
+    "msg": "Current Redis version: 7.2.6"
 }
 
 TASK [Show idempotent upgrade message] *****************************************
-skipping: [redis-node-1]
+ok: [redis-node-1] => {
+    "msg": "Cluster already running target version 7.2.6"
+}
 
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=5    changed=2    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+redis-node-1               : ok=8    changed=3    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
 redis-node-2               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 redis-node-3               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 redis-node-4               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
@@ -68,40 +78,15 @@ changed: [redis-node-4]
 
 TASK [Show current version] ****************************************************
 ok: [redis-node-4] => {
-    "msg": "Current Redis version: 7.0.15"
+    "msg": "Current Redis version: 7.2.6"
 }
 
 TASK [Skip upgrade if already on target version] *******************************
-skipping: [redis-node-4]
+ok: [redis-node-4] => {
+    "msg": "Node already running Redis 7.2.6. Skipping upgrade."
+}
 
 TASK [End play if already upgraded] ********************************************
-skipping: [redis-node-4]
-
-TASK [Stop Redis] **************************************************************
-changed: [redis-node-4]
-
-TASK [Download Redis 7.2.6] ****************************************************
-changed: [redis-node-4]
-
-TASK [Build Redis 7.2.6] *******************************************************
-changed: [redis-node-4]
-
-TASK [Install Redis 7.2.6] *****************************************************
-changed: [redis-node-4]
-
-TASK [Restart Redis] ***********************************************************
-changed: [redis-node-4]
-
-TASK [Wait for Redis to start] *************************************************
-ok: [redis-node-4]
-
-TASK [Verify upgraded Redis version] *******************************************
-changed: [redis-node-4]
-
-TASK [Show upgraded version] ***************************************************
-ok: [redis-node-4] => {
-    "msg": "Node upgraded to Redis 7.2.6"
-}
 
 PLAY [redis-node-1] ************************************************************
 
@@ -118,7 +103,7 @@ ok: [redis-node-1] => {
 
 PLAY RECAP *********************************************************************
 redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-4               : ok=10   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-4               : ok=3    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 
 Upgrading replica redis-node-5
@@ -134,40 +119,15 @@ changed: [redis-node-5]
 
 TASK [Show current version] ****************************************************
 ok: [redis-node-5] => {
-    "msg": "Current Redis version: 7.0.15"
+    "msg": "Current Redis version: 7.2.6"
 }
 
 TASK [Skip upgrade if already on target version] *******************************
-skipping: [redis-node-5]
+ok: [redis-node-5] => {
+    "msg": "Node already running Redis 7.2.6. Skipping upgrade."
+}
 
 TASK [End play if already upgraded] ********************************************
-skipping: [redis-node-5]
-
-TASK [Stop Redis] **************************************************************
-changed: [redis-node-5]
-
-TASK [Download Redis 7.2.6] ****************************************************
-changed: [redis-node-5]
-
-TASK [Build Redis 7.2.6] *******************************************************
-changed: [redis-node-5]
-
-TASK [Install Redis 7.2.6] *****************************************************
-changed: [redis-node-5]
-
-TASK [Restart Redis] ***********************************************************
-changed: [redis-node-5]
-
-TASK [Wait for Redis to start] *************************************************
-ok: [redis-node-5]
-
-TASK [Verify upgraded Redis version] *******************************************
-changed: [redis-node-5]
-
-TASK [Show upgraded version] ***************************************************
-ok: [redis-node-5] => {
-    "msg": "Node upgraded to Redis 7.2.6"
-}
 
 PLAY [redis-node-1] ************************************************************
 
@@ -184,7 +144,7 @@ ok: [redis-node-1] => {
 
 PLAY RECAP *********************************************************************
 redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-5               : ok=10   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-5               : ok=3    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 
 Upgrading replica redis-node-6
@@ -200,40 +160,15 @@ changed: [redis-node-6]
 
 TASK [Show current version] ****************************************************
 ok: [redis-node-6] => {
-    "msg": "Current Redis version: 7.0.15"
+    "msg": "Current Redis version: 7.2.6"
 }
 
 TASK [Skip upgrade if already on target version] *******************************
-skipping: [redis-node-6]
+ok: [redis-node-6] => {
+    "msg": "Node already running Redis 7.2.6. Skipping upgrade."
+}
 
 TASK [End play if already upgraded] ********************************************
-skipping: [redis-node-6]
-
-TASK [Stop Redis] **************************************************************
-changed: [redis-node-6]
-
-TASK [Download Redis 7.2.6] ****************************************************
-changed: [redis-node-6]
-
-TASK [Build Redis 7.2.6] *******************************************************
-changed: [redis-node-6]
-
-TASK [Install Redis 7.2.6] *****************************************************
-changed: [redis-node-6]
-
-TASK [Restart Redis] ***********************************************************
-changed: [redis-node-6]
-
-TASK [Wait for Redis to start] *************************************************
-ok: [redis-node-6]
-
-TASK [Verify upgraded Redis version] *******************************************
-changed: [redis-node-6]
-
-TASK [Show upgraded version] ***************************************************
-ok: [redis-node-6] => {
-    "msg": "Node upgraded to Redis 7.2.6"
-}
 
 PLAY [redis-node-1] ************************************************************
 
@@ -250,169 +185,16 @@ ok: [redis-node-1] => {
 
 PLAY RECAP *********************************************************************
 redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-6               : ok=10   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-6               : ok=3    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 
 [3/6] Promoting upgraded replicas when needed...
 
-Failing over redis-node-4
-Checking prerequisites...
-✓ Container runtime found: docker
-✓ Ansible version found: 2.16.3
+redis-node-4 already master — skipping failover
 
+redis-node-5 already master — skipping failover
 
-PLAY [redis-node-4] ************************************************************
-
-TASK [Trigger manual failover] *************************************************
-changed: [redis-node-4]
-
-TASK [Show failover result] ****************************************************
-ok: [redis-node-4] => {
-    "failover_output.stdout_lines": [
-        "OK"
-    ]
-}
-
-PLAY [redis-node-1] ************************************************************
-
-TASK [Wait for cluster stabilization] ******************************************
-Pausing for 10 seconds
-(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)
-ok: [redis-node-1]
-
-TASK [Verify cluster state] ****************************************************
-changed: [redis-node-1]
-
-TASK [Show cluster state] ******************************************************
-ok: [redis-node-1] => {
-    "msg": "Cluster state after failover: ok"
-}
-
-TASK [Show cluster topology] ***************************************************
-changed: [redis-node-1]
-
-TASK [Print cluster topology] **************************************************
-ok: [redis-node-1] => {
-    "cluster_nodes.stdout_lines": [
-        "47dc586b0717dd6e6e784daca1b711c5afc91bb6 10.10.0.14:6379@16379 master - 0 1779679269379 21 connected 10923-16383",
-        "6c46a6e911a84b509e14dd74bd11f25cb581c396 10.10.0.12:6379@16379 master - 0 1779679268000 20 connected 5461-10922",
-        "5e16737d9fe8b1e2cd02ea7de3ee2b023e7934b1 10.10.0.11:6379@16379 myself,master - 0 1779679269000 19 connected 0-5460",
-        "327b8f6d37480e77c37439c6feecff3801e943ac 10.10.0.13:6379@16379 slave 47dc586b0717dd6e6e784daca1b711c5afc91bb6 0 1779679268372 21 connected",
-        "33c3b52af0f3af6d541e68f770b1b30551e8385e 10.10.0.16:6379@16379 slave 6c46a6e911a84b509e14dd74bd11f25cb581c396 0 1779679269882 20 connected",
-        "24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 10.10.0.15:6379@16379 slave 5e16737d9fe8b1e2cd02ea7de3ee2b023e7934b1 0 1779679268876 19 connected"
-    ]
-}
-
-PLAY RECAP *********************************************************************
-redis-node-1               : ok=5    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-4               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-
-
-Failing over redis-node-5
-Checking prerequisites...
-✓ Container runtime found: docker
-✓ Ansible version found: 2.16.3
-
-
-PLAY [redis-node-5] ************************************************************
-
-TASK [Trigger manual failover] *************************************************
-changed: [redis-node-5]
-
-TASK [Show failover result] ****************************************************
-ok: [redis-node-5] => {
-    "failover_output.stdout_lines": [
-        "OK"
-    ]
-}
-
-PLAY [redis-node-1] ************************************************************
-
-TASK [Wait for cluster stabilization] ******************************************
-Pausing for 10 seconds
-(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)
-ok: [redis-node-1]
-
-TASK [Verify cluster state] ****************************************************
-changed: [redis-node-1]
-
-TASK [Show cluster state] ******************************************************
-ok: [redis-node-1] => {
-    "msg": "Cluster state after failover: ok"
-}
-
-TASK [Show cluster topology] ***************************************************
-changed: [redis-node-1]
-
-TASK [Print cluster topology] **************************************************
-ok: [redis-node-1] => {
-    "cluster_nodes.stdout_lines": [
-        "47dc586b0717dd6e6e784daca1b711c5afc91bb6 10.10.0.14:6379@16379 master - 0 1779679283000 21 connected 10923-16383",
-        "6c46a6e911a84b509e14dd74bd11f25cb581c396 10.10.0.12:6379@16379 master - 0 1779679283559 20 connected 5461-10922",
-        "5e16737d9fe8b1e2cd02ea7de3ee2b023e7934b1 10.10.0.11:6379@16379 myself,slave 24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 0 1779679283000 22 connected",
-        "327b8f6d37480e77c37439c6feecff3801e943ac 10.10.0.13:6379@16379 slave 47dc586b0717dd6e6e784daca1b711c5afc91bb6 0 1779679283458 21 connected",
-        "33c3b52af0f3af6d541e68f770b1b30551e8385e 10.10.0.16:6379@16379 slave 6c46a6e911a84b509e14dd74bd11f25cb581c396 0 1779679283961 20 connected",
-        "24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 10.10.0.15:6379@16379 master - 0 1779679282452 22 connected 0-5460"
-    ]
-}
-
-PLAY RECAP *********************************************************************
-redis-node-1               : ok=5    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-5               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-
-
-Failing over redis-node-6
-Checking prerequisites...
-✓ Container runtime found: docker
-✓ Ansible version found: 2.16.3
-
-
-PLAY [redis-node-6] ************************************************************
-
-TASK [Trigger manual failover] *************************************************
-changed: [redis-node-6]
-
-TASK [Show failover result] ****************************************************
-ok: [redis-node-6] => {
-    "failover_output.stdout_lines": [
-        "OK"
-    ]
-}
-
-PLAY [redis-node-1] ************************************************************
-
-TASK [Wait for cluster stabilization] ******************************************
-Pausing for 10 seconds
-(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)
-ok: [redis-node-1]
-
-TASK [Verify cluster state] ****************************************************
-changed: [redis-node-1]
-
-TASK [Show cluster state] ******************************************************
-ok: [redis-node-1] => {
-    "msg": "Cluster state after failover: ok"
-}
-
-TASK [Show cluster topology] ***************************************************
-changed: [redis-node-1]
-
-TASK [Print cluster topology] **************************************************
-ok: [redis-node-1] => {
-    "cluster_nodes.stdout_lines": [
-        "47dc586b0717dd6e6e784daca1b711c5afc91bb6 10.10.0.14:6379@16379 master - 0 1779679296000 21 connected 10923-16383",
-        "6c46a6e911a84b509e14dd74bd11f25cb581c396 10.10.0.12:6379@16379 slave 33c3b52af0f3af6d541e68f770b1b30551e8385e 0 1779679297527 23 connected",
-        "5e16737d9fe8b1e2cd02ea7de3ee2b023e7934b1 10.10.0.11:6379@16379 myself,slave 24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 0 1779679297000 22 connected",
-        "327b8f6d37480e77c37439c6feecff3801e943ac 10.10.0.13:6379@16379 slave 47dc586b0717dd6e6e784daca1b711c5afc91bb6 0 1779679296519 21 connected",
-        "33c3b52af0f3af6d541e68f770b1b30551e8385e 10.10.0.16:6379@16379 master - 0 1779679296017 23 connected 5461-10922",
-        "24ce0fb1d443d9ec3c585d60bca215da50f2b6eb 10.10.0.15:6379@16379 master - 0 1779679296519 22 connected 0-5460"
-    ]
-}
-
-PLAY RECAP *********************************************************************
-redis-node-1               : ok=5    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-6               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-
+redis-node-6 already master — skipping failover
 
 [4/6] Upgrading remaining nodes...
 
@@ -429,40 +211,15 @@ changed: [redis-node-1]
 
 TASK [Show current version] ****************************************************
 ok: [redis-node-1] => {
-    "msg": "Current Redis version: 7.0.15"
+    "msg": "Current Redis version: 7.2.6"
 }
 
 TASK [Skip upgrade if already on target version] *******************************
-skipping: [redis-node-1]
+ok: [redis-node-1] => {
+    "msg": "Node already running Redis 7.2.6. Skipping upgrade."
+}
 
 TASK [End play if already upgraded] ********************************************
-skipping: [redis-node-1]
-
-TASK [Stop Redis] **************************************************************
-changed: [redis-node-1]
-
-TASK [Download Redis 7.2.6] ****************************************************
-changed: [redis-node-1]
-
-TASK [Build Redis 7.2.6] *******************************************************
-changed: [redis-node-1]
-
-TASK [Install Redis 7.2.6] *****************************************************
-changed: [redis-node-1]
-
-TASK [Restart Redis] ***********************************************************
-changed: [redis-node-1]
-
-TASK [Wait for Redis to start] *************************************************
-ok: [redis-node-1]
-
-TASK [Verify upgraded Redis version] *******************************************
-changed: [redis-node-1]
-
-TASK [Show upgraded version] ***************************************************
-ok: [redis-node-1] => {
-    "msg": "Node upgraded to Redis 7.2.6"
-}
 
 PLAY [redis-node-1] ************************************************************
 
@@ -478,7 +235,7 @@ ok: [redis-node-1] => {
 }
 
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=12   changed=8    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+redis-node-1               : ok=5    changed=2    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
 
 
 Upgrading redis-node-2
@@ -494,40 +251,15 @@ changed: [redis-node-2]
 
 TASK [Show current version] ****************************************************
 ok: [redis-node-2] => {
-    "msg": "Current Redis version: 7.0.15"
+    "msg": "Current Redis version: 7.2.6"
 }
 
 TASK [Skip upgrade if already on target version] *******************************
-skipping: [redis-node-2]
+ok: [redis-node-2] => {
+    "msg": "Node already running Redis 7.2.6. Skipping upgrade."
+}
 
 TASK [End play if already upgraded] ********************************************
-skipping: [redis-node-2]
-
-TASK [Stop Redis] **************************************************************
-changed: [redis-node-2]
-
-TASK [Download Redis 7.2.6] ****************************************************
-changed: [redis-node-2]
-
-TASK [Build Redis 7.2.6] *******************************************************
-changed: [redis-node-2]
-
-TASK [Install Redis 7.2.6] *****************************************************
-changed: [redis-node-2]
-
-TASK [Restart Redis] ***********************************************************
-changed: [redis-node-2]
-
-TASK [Wait for Redis to start] *************************************************
-ok: [redis-node-2]
-
-TASK [Verify upgraded Redis version] *******************************************
-changed: [redis-node-2]
-
-TASK [Show upgraded version] ***************************************************
-ok: [redis-node-2] => {
-    "msg": "Node upgraded to Redis 7.2.6"
-}
 
 PLAY [redis-node-1] ************************************************************
 
@@ -544,7 +276,7 @@ ok: [redis-node-1] => {
 
 PLAY RECAP *********************************************************************
 redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-2               : ok=10   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-2               : ok=3    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 
 Upgrading redis-node-3
@@ -560,40 +292,15 @@ changed: [redis-node-3]
 
 TASK [Show current version] ****************************************************
 ok: [redis-node-3] => {
-    "msg": "Current Redis version: 7.0.15"
+    "msg": "Current Redis version: 7.2.6"
 }
 
 TASK [Skip upgrade if already on target version] *******************************
-skipping: [redis-node-3]
+ok: [redis-node-3] => {
+    "msg": "Node already running Redis 7.2.6. Skipping upgrade."
+}
 
 TASK [End play if already upgraded] ********************************************
-skipping: [redis-node-3]
-
-TASK [Stop Redis] **************************************************************
-changed: [redis-node-3]
-
-TASK [Download Redis 7.2.6] ****************************************************
-changed: [redis-node-3]
-
-TASK [Build Redis 7.2.6] *******************************************************
-changed: [redis-node-3]
-
-TASK [Install Redis 7.2.6] *****************************************************
-changed: [redis-node-3]
-
-TASK [Restart Redis] ***********************************************************
-changed: [redis-node-3]
-
-TASK [Wait for Redis to start] *************************************************
-ok: [redis-node-3]
-
-TASK [Verify upgraded Redis version] *******************************************
-changed: [redis-node-3]
-
-TASK [Show upgraded version] ***************************************************
-ok: [redis-node-3] => {
-    "msg": "Node upgraded to Redis 7.2.6"
-}
 
 PLAY [redis-node-1] ************************************************************
 
@@ -610,8 +317,10 @@ ok: [redis-node-1] => {
 
 PLAY RECAP *********************************************************************
 redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-3               : ok=10   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-3               : ok=3    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
+
+Waiting for synchronization...
 
 [5/6] Running full verification...
 Checking prerequisites...
@@ -636,23 +345,23 @@ ok: [redis-node-1] => {
 TASK [Verify all 16384 slots covered] ******************************************
 changed: [redis-node-1]
 
-TASK [Fail if slots missing] ***************************************************
+TASK [Fail if slot coverage incomplete] ****************************************
 skipping: [redis-node-1]
 
 TASK [Show slot coverage] ******************************************************
 ok: [redis-node-1] => {
-    "msg": "PASS — cluster slots assigned"
+    "msg": "PASS — all 16384 slots assigned"
 }
 
-TASK [Check replica links] *****************************************************
+TASK [Verify replica link health] **********************************************
 changed: [redis-node-1]
 
-TASK [Fail if replicas missing] ************************************************
+TASK [Fail if replica links unhealthy] *****************************************
 skipping: [redis-node-1]
 
-TASK [Show replica topology] ***************************************************
+TASK [Show replica health] *****************************************************
 ok: [redis-node-1] => {
-    "msg": "PASS — replicas connected"
+    "msg": "PASS — all replica links healthy"
 }
 
 TASK [Collect Redis versions] **************************************************
@@ -666,7 +375,7 @@ ok: [redis-node-1] => {
     "msg": "PASS — all nodes running Redis 7.2.6"
 }
 
-TASK [Run existing data verification] ******************************************
+TASK [Verify deterministic Redis data integrity] *******************************
 changed: [redis-node-1]
 
 TASK [Show data verification] **************************************************
@@ -708,9 +417,9 @@ TASK [Show masters] ************************************************************
 ok: [redis-node-1] => {
     "masters_output.stdout_lines": [
         "MASTERS",
-        "10.10.0.15:6379 [master] v7.2.6 slots: 0-5460 keys: 333 mem: 1.83M",
+        "10.10.0.16:6379 [master] v7.2.6 slots: 5461-10922 keys: 324 mem: 1.83M",
         "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383 keys: 343 mem: 1.83M",
-        "10.10.0.16:6379 [master] v7.2.6 slots: 5461-10922 keys: 324 mem: 1.83M"
+        "10.10.0.15:6379 [master] v7.2.6 slots: 0-5460 keys: 333 mem: 1.83M"
     ]
 }
 
@@ -721,9 +430,9 @@ TASK [Show replicas] ***********************************************************
 ok: [redis-node-1] => {
     "replicas_output.stdout_lines": [
         "REPLICAS",
-        "10.10.0.11:6379 [replica] v7.2.6 replicating: 10.10.0.15:6379 mem: 1.76M",
-        "10.10.0.12:6379 [replica] v7.2.6 replicating: 10.10.0.16:6379 mem: 1.69M",
-        "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 mem: 1.69M"
+        "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 mem: 1.69M",
+        "10.10.0.11:6379 [replica] v7.2.6 replicating: 10.10.0.15:6379 mem: 1.74M",
+        "10.10.0.12:6379 [replica] v7.2.6 replicating: 10.10.0.16:6379 mem: 1.69M"
     ]
 }
 

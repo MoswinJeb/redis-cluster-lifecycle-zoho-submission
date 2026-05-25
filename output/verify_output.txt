@@ -20,23 +20,23 @@ ok: [redis-node-1] => {
 TASK [Verify all 16384 slots covered] ******************************************
 changed: [redis-node-1]
 
-TASK [Fail if slots missing] ***************************************************
+TASK [Fail if slot coverage incomplete] ****************************************
 skipping: [redis-node-1]
 
 TASK [Show slot coverage] ******************************************************
 ok: [redis-node-1] => {
-    "msg": "PASS — cluster slots assigned"
+    "msg": "PASS — all 16384 slots assigned"
 }
 
-TASK [Check replica links] *****************************************************
+TASK [Verify replica link health] **********************************************
 changed: [redis-node-1]
 
-TASK [Fail if replicas missing] ************************************************
+TASK [Fail if replica links unhealthy] *****************************************
 skipping: [redis-node-1]
 
-TASK [Show replica topology] ***************************************************
+TASK [Show replica health] *****************************************************
 ok: [redis-node-1] => {
-    "msg": "PASS — replicas connected"
+    "msg": "PASS — all replica links healthy"
 }
 
 TASK [Collect Redis versions] **************************************************
@@ -50,7 +50,7 @@ ok: [redis-node-1] => {
     "msg": "PASS — all nodes running Redis 7.2.6"
 }
 
-TASK [Run existing data verification] ******************************************
+TASK [Verify deterministic Redis data integrity] *******************************
 changed: [redis-node-1]
 
 TASK [Show data verification] **************************************************

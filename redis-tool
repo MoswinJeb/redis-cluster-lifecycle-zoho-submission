@@ -43,11 +43,58 @@ check_prereqs
 
 case $COMMAND in
 
-  provision)
+    provision)
+
+    REDIS_VERSION="7.0.15"
+    MASTERS="3"
+    REPLICAS_PER_MASTER="1"
+
+    shift
+
+    while [[ $# -gt 0 ]]; do
+
+      case $1 in
+
+        --version)
+          REDIS_VERSION="$2"
+          shift 2
+          ;;
+
+        --masters)
+          MASTERS="$2"
+          shift 2
+          ;;
+
+        --replicas-per-master)
+          REPLICAS_PER_MASTER="$2"
+          shift 2
+          ;;
+
+        *)
+          echo "Unknown option: $1"
+          exit 1
+          ;;
+
+      esac
+
+    done
+
+    if [ "$MASTERS" != "3" ] || [ "$REPLICAS_PER_MASTER" != "1" ]; then
+
+      echo "This implementation currently supports:"
+      echo "--masters 3 --replicas-per-master 1"
+      exit 1
+
+    fi
 
     echo "Provisioning Redis Cluster..."
+    echo "Redis version: $REDIS_VERSION"
+    echo "Masters: $MASTERS"
+    echo "Replicas per master: $REPLICAS_PER_MASTER"
 
-    run_playbook playbooks/provision.yml
+    run_playbook playbooks/provision.yml \
+      -e redis_version=$REDIS_VERSION
+
     run_playbook playbooks/create_cluster.yml
 
     echo
@@ -63,9 +110,33 @@ case $COMMAND in
 
       seed)
 
-        echo "Seeding Redis data..."
+        KEY_COUNT="1000"
 
-        run_playbook playbooks/data_seed.yml
+        shift 2
+
+        while [[ $# -gt 0 ]]; do
+
+          case $1 in
+
+            --keys)
+              KEY_COUNT="$2"
+              shift 2
+              ;;
+
+            *)
+              echo "Unknown option: $1"
+              exit 1
+              ;;
+
+          esac
+
+        done
+
+        echo "Seeding Redis data..."
+        echo "Key count: $KEY_COUNT"
+
+        run_playbook playbooks/data_seed.yml \
+          -e key_count=$KEY_COUNT
         ;;
 
       verify)
@@ -279,7 +350,10 @@ case $COMMAND in
       ./redis-tool upgrade-node redis-node-3 10.10.0.13 $TARGET_VERSION
 
     fi
-
+    echo 
+    echo "Waiting for synchronization..."
+    sleep 15
+   
     echo
     echo "[5/6] Running full verification..."
     ./redis-tool verify --full

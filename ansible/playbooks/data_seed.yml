@@ -1,20 +1,38 @@
 - hosts: redis-node-1
   gather_facts: no
 
+  vars:
+    key_count: "{{ key_count | default(1000) }}"
+
   tasks:
 
-    - name: Seed 1000 deterministic keys into Redis Cluster
+    - name: Seed deterministic keys into Redis Cluster
       shell: |
-        for i in $(seq -w 1 1000); do
+        for i in $(seq -w 1 {{ key_count }}); do
+
           key="key:$i"
+
           value=$(echo -n "$key" | sha256sum | awk '{print $1}')
 
-          redis-cli -c -h 10.10.0.11 -p 6379 SET "$key" "$value" > /dev/null
+          redis-cli -c -h 10.10.0.11 -p 6379 \
+            SET "$key" "$value" > /dev/null
+
         done
 
-        echo "Inserted 1000 keys into Redis Cluster"
+        echo "Inserted {{ key_count }} keys into Redis Cluster"
+
+        echo
+        echo "Key distribution across masters:"
+
+        for node in 10.10.0.11 10.10.0.12 10.10.0.13; do
+
+          count=$(redis-cli -h $node DBSIZE)
+
+          echo "$node => $count keys"
+
+        done
       register: seed_output
 
     - name: Print seed result
       debug:
-        var: seed_output.stdout
+        var: seed_output.stdout_lines

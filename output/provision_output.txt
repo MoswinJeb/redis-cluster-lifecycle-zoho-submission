@@ -3,85 +3,88 @@ Checking prerequisites...
 ✓ Ansible version found: 2.16.3
 
 Provisioning Redis Cluster...
+Redis version: 7.0.15
+Masters: 3
+Replicas per master: 1
 
 PLAY [redis] *******************************************************************
 
 TASK [Gathering Facts] *********************************************************
 ok: [redis-node-4]
-ok: [redis-node-1]
-ok: [redis-node-2]
 ok: [redis-node-5]
 ok: [redis-node-3]
+ok: [redis-node-2]
+ok: [redis-node-1]
 ok: [redis-node-6]
 
 TASK [redis : Install Redis build dependencies] ********************************
-ok: [redis-node-4]
-ok: [redis-node-2]
 ok: [redis-node-1]
+ok: [redis-node-2]
 ok: [redis-node-3]
+ok: [redis-node-4]
 ok: [redis-node-5]
 ok: [redis-node-6]
 
 TASK [redis : Download Redis source] *******************************************
 ok: [redis-node-1]
-ok: [redis-node-3]
-ok: [redis-node-2]
 ok: [redis-node-5]
+ok: [redis-node-3]
 ok: [redis-node-4]
+ok: [redis-node-2]
 ok: [redis-node-6]
 
 TASK [redis : Extract Redis source] ********************************************
 ok: [redis-node-2]
+ok: [redis-node-3]
 ok: [redis-node-1]
-ok: [redis-node-5]
 ok: [redis-node-4]
-changed: [redis-node-3]
+ok: [redis-node-5]
 ok: [redis-node-6]
 
 TASK [redis : Build Redis] *****************************************************
-changed: [redis-node-3]
 changed: [redis-node-5]
 changed: [redis-node-1]
-changed: [redis-node-4]
 changed: [redis-node-2]
+changed: [redis-node-3]
+changed: [redis-node-4]
 changed: [redis-node-6]
 
 TASK [redis : Install Redis] ***************************************************
 changed: [redis-node-3]
 changed: [redis-node-1]
-changed: [redis-node-2]
-changed: [redis-node-4]
 changed: [redis-node-5]
+changed: [redis-node-4]
+changed: [redis-node-2]
 changed: [redis-node-6]
 
 TASK [redis : Create Redis data directory] *************************************
-ok: [redis-node-1]
-ok: [redis-node-5]
 ok: [redis-node-3]
+ok: [redis-node-5]
 ok: [redis-node-2]
 ok: [redis-node-4]
+ok: [redis-node-1]
 ok: [redis-node-6]
 
 TASK [redis : Copy Redis configuration] ****************************************
 ok: [redis-node-1]
-ok: [redis-node-5]
 ok: [redis-node-2]
+ok: [redis-node-5]
 ok: [redis-node-3]
 ok: [redis-node-4]
 ok: [redis-node-6]
 
 TASK [redis : Start Redis server] **********************************************
-changed: [redis-node-1]
-changed: [redis-node-3]
 changed: [redis-node-2]
-changed: [redis-node-5]
+changed: [redis-node-3]
 changed: [redis-node-4]
+changed: [redis-node-1]
+changed: [redis-node-5]
 changed: [redis-node-6]
 
 PLAY RECAP *********************************************************************
 redis-node-1               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 redis-node-2               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-3               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-3               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 redis-node-4               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 redis-node-5               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 redis-node-6               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
@@ -131,9 +134,9 @@ TASK [Show masters] ************************************************************
 ok: [redis-node-1] => {
     "masters_output.stdout_lines": [
         "MASTERS",
-        "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383 keys: 343 mem: 1.91M",
-        "10.10.0.16:6379 [master] v7.2.6 slots: 5461-10922 keys: 324 mem: 1.91M",
-        "10.10.0.15:6379 [master] v7.2.6 slots: 0-5460 keys: 333 mem: 1.94M"
+        "10.10.0.15:6379 [master] v7.2.6 slots: 0-5460 keys: 333 mem: 1.89M",
+        "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383 keys: 343 mem: 1.89M",
+        "10.10.0.16:6379 [master] v7.2.6 slots: 5461-10922 keys: 324 mem: 1.89M"
     ]
 }
 
@@ -144,9 +147,9 @@ TASK [Show replicas] ***********************************************************
 ok: [redis-node-1] => {
     "replicas_output.stdout_lines": [
         "REPLICAS",
-        "10.10.0.12:6379 [replica] v7.2.6 replicating: 10.10.0.16:6379 mem: 1.92M",
-        "10.10.0.11:6379 [replica] v7.2.6 replicating: 10.10.0.15:6379 mem: 1.99M",
-        "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 mem: 1.69M"
+        "10.10.0.11:6379 [replica] v7.2.6 replicating: 10.10.0.15:6379 mem: 1.87M",
+        "10.10.0.12:6379 [replica] v7.2.6 replicating: 10.10.0.16:6379 mem: 1.80M",
+        "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 mem: 1.80M"
     ]
 }
 
