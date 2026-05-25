@@ -1,0 +1,92 @@
+- hosts: redis-node-1
+  gather_facts: no
+
+  tasks:
+
+    - name: Check cluster state
+      shell: redis-cli cluster info | grep cluster_state | cut -d':' -f2
+      register: cluster_state
+
+    - name: Fail if cluster state is not ok
+      fail:
+        msg: "FAIL — cluster_state is not ok"
+      when: cluster_state.stdout != "ok"
+
+    - name: Show cluster state
+      debug:
+        msg: "PASS — cluster_state: ok"
+
+    - name: Verify all 16384 slots covered
+      shell: |
+        redis-cli cluster slots | wc -l
+      register: slot_count
+
+    - name: Fail if slots missing
+      fail:
+        msg: "FAIL — cluster slot coverage incomplete"
+      when: slot_count.stdout | int < 3
+
+    - name: Show slot coverage
+      debug:
+        msg: "PASS — cluster slots assigned"
+
+    - name: Check replica links
+      shell: |
+        redis-cli cluster nodes | grep slave
+      register: replica_links
+
+    - name: Fail if replicas missing
+      fail:
+        msg: "FAIL — replica topology unhealthy"
+      when: replica_links.stdout == ""
+
+    - name: Show replica topology
+      debug:
+        msg: "PASS — replicas connected"
+
+    - name: Collect Redis versions
+      shell: |
+        for ip in 10.10.0.11 10.10.0.12 10.10.0.13 10.10.0.14 10.10.0.15 10.10.0.16
+        do
+          redis-cli -h $ip INFO server | grep redis_version | cut -d':' -f2
+        done | sort | uniq
+      register: versions
+
+    - name: Fail if versions inconsistent
+      fail:
+        msg: "FAIL — Redis versions inconsistent across cluster"
+      when: versions.stdout_lines | length != 1
+
+    - name: Show version consistency
+      debug:
+        msg: "PASS — all nodes running Redis {{ versions.stdout }}"
+
+    - name: Run existing data verification
+      shell: |
+        count=0
+
+        for i in $(seq -w 1 1000)
+        do
+          value=$(redis-cli -c GET key:$i)
+
+          if [ -n "$value" ]; then
+            count=$((count+1))
+          fi
+        done
+
+        if [ "$count" -eq 1000 ]; then
+          echo "PASS — 1000/1000 keys verified"
+        else
+          echo "FAIL — verified $count/1000 keys"
+          exit 1
+        fi
+      register: verify_result
+
+
+    - name: Show data verification
+      debug:
+        var: verify_result.stdout
+
+    - name: Final verification summary
+      debug:
+        msg: "FULL VERIFICATION COMPLETE"

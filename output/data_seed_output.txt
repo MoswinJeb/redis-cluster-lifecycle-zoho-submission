@@ -1,3 +1,8 @@
+Checking prerequisites...
+✓ Container runtime found: docker
+✓ Ansible version found: 2.16.3
+
+Seeding Redis data...
 
 PLAY [redis-node-1] ************************************************************
 

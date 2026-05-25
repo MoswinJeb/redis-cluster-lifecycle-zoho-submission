@@ -12,18 +12,21 @@ check_prereqs() {
     CONTAINER_RUNTIME="docker"
   else
     echo "ERROR: Docker or Podman is required."
+    echo "Install Docker: https://docs.docker.com/get-docker/"
+    echo "Install Podman: https://podman.io/docs/installation"
     exit 1
   fi
 
   if ! command -v ansible >/dev/null 2>&1; then
     echo "ERROR: Ansible 2.14+ is required."
+    echo "Install guide: https://docs.ansible.com/"
     exit 1
   fi
 
-  ANSIBLE_VERSION=$(ansible --version | head -1 | awk '{print $3}')
+  ANSIBLE_VERSION=$(ansible --version | head -1 | awk '{print $3}' | tr -d ']')
 
-  echo "Container runtime: $CONTAINER_RUNTIME"
-  echo "Ansible version: $ANSIBLE_VERSION"
+  echo "✓ Container runtime found: $CONTAINER_RUNTIME"
+  echo "✓ Ansible version found: $ANSIBLE_VERSION"
 
   echo
 }
@@ -71,8 +74,7 @@ case $COMMAND in
 
           echo "Running full cluster verification..."
 
-          run_playbook playbooks/data_verify.yml
-          run_playbook playbooks/status.yml
+          run_playbook playbooks/verify_full.yml
 
           echo
           echo "FULL VERIFICATION COMPLETE"
@@ -96,6 +98,26 @@ case $COMMAND in
         ;;
 
     esac
+    ;;
+
+  verify)
+
+    if [ "$2" == "--full" ]; then
+
+      echo "Running full cluster verification..."
+
+      run_playbook playbooks/verify_full.yml
+
+      echo
+      echo "FULL VERIFICATION COMPLETE"
+
+    else
+
+      echo "Usage:"
+      echo "./redis-tool verify --full"
+      exit 1
+
+    fi
     ;;
 
   status)
@@ -182,12 +204,17 @@ case $COMMAND in
     echo "Starting rolling upgrade to Redis $TARGET_VERSION"
 
     echo
-    echo "[1/4] Running prechecks..."
+    echo "[1/6] Running prechecks..."
     ./redis-tool precheck
 
-    CURRENT_VERSION=$(cd ansible && ansible redis-node-1 -m shell -a "redis-server --version | awk '{print \$3}' | cut -d'=' -f2" | tail -1 | awk '{print $NF}')
+    VERSION_CHECK=$(cd ansible && ansible redis \
+      -m shell \
+      -a "redis-server --version | awk '{print \$3}' | cut -d'=' -f2" \
+      | grep Redis | awk '{print $NF}' | sort | uniq)
 
-    if [ "$CURRENT_VERSION" = "$TARGET_VERSION" ]; then
+    VERSION_COUNT=$(echo "$VERSION_CHECK" | wc -l)
+
+    if [ "$VERSION_COUNT" -eq 1 ] && [ "$VERSION_CHECK" = "$TARGET_VERSION" ]; then
 
       echo
       echo "Cluster already running Redis $TARGET_VERSION"
@@ -196,29 +223,69 @@ case $COMMAND in
     else
 
       echo
-      echo "[2/4] Performing rolling replica-first upgrade..."
+      echo "[2/6] Upgrading replicas first..."
 
+      echo
+      echo "Upgrading replica redis-node-4"
       ./redis-tool upgrade-node redis-node-4 10.10.0.14 $TARGET_VERSION
-      ./redis-tool failover redis-node-4
 
+      echo
+      echo "Upgrading replica redis-node-5"
       ./redis-tool upgrade-node redis-node-5 10.10.0.15 $TARGET_VERSION
-      ./redis-tool failover redis-node-5
 
+      echo
+      echo "Upgrading replica redis-node-6"
       ./redis-tool upgrade-node redis-node-6 10.10.0.16 $TARGET_VERSION
-      ./redis-tool failover redis-node-6
 
+      echo
+      echo "[3/6] Promoting upgraded replicas when needed..."
+
+      for replica in redis-node-4 redis-node-5 redis-node-6
+      do
+
+        ROLE=$(cd ansible && ansible $replica \
+          -m shell \
+          -a "redis-cli INFO replication | grep role | cut -d':' -f2" \
+          | grep -v SUCCESS | tail -1 | tr -d '\r')
+
+        if [ "$ROLE" = "slave" ]; then
+
+          echo
+          echo "Failing over $replica"
+          ./redis-tool failover $replica
+
+        else
+
+          echo
+          echo "$replica already master — skipping failover"
+
+        fi
+
+      done
+
+      echo
+      echo "[4/6] Upgrading remaining nodes..."
+
+      echo
+      echo "Upgrading redis-node-1"
       ./redis-tool upgrade-node redis-node-1 10.10.0.11 $TARGET_VERSION
+
+      echo
+      echo "Upgrading redis-node-2"
       ./redis-tool upgrade-node redis-node-2 10.10.0.12 $TARGET_VERSION
+
+      echo
+      echo "Upgrading redis-node-3"
       ./redis-tool upgrade-node redis-node-3 10.10.0.13 $TARGET_VERSION
 
     fi
 
     echo
-    echo "[3/4] Running full verification..."
-    ./redis-tool data verify --full
+    echo "[5/6] Running full verification..."
+    ./redis-tool verify --full
 
     echo
-    echo "[4/4] Final cluster status..."
+    echo "[6/6] Final cluster status..."
     ./redis-tool status
 
     echo
@@ -231,7 +298,7 @@ case $COMMAND in
     echo "./redis-tool provision"
     echo "./redis-tool data seed"
     echo "./redis-tool data verify"
-    echo "./redis-tool data verify --full"
+    echo "./redis-tool verify --full"
     echo "./redis-tool status"
     echo "./redis-tool precheck"
     echo "./redis-tool failover <replica-node>"

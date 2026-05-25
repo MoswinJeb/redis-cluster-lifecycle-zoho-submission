@@ -1,14 +1,70 @@
+Checking prerequisites...
+✓ Container runtime found: docker
+✓ Ansible version found: 2.16.3
+
+Running full cluster verification...
 
 PLAY [redis-node-1] ************************************************************
 
-TASK [Verify 1000 Redis keys] **************************************************
+TASK [Check cluster state] *****************************************************
 changed: [redis-node-1]
 
-TASK [Print verification result] ***********************************************
+TASK [Fail if cluster state is not ok] *****************************************
+skipping: [redis-node-1]
+
+TASK [Show cluster state] ******************************************************
 ok: [redis-node-1] => {
-    "verify_output.stdout": "PASS — 1000/1000 keys verified"
+    "msg": "PASS — cluster_state: ok"
+}
+
+TASK [Verify all 16384 slots covered] ******************************************
+changed: [redis-node-1]
+
+TASK [Fail if slots missing] ***************************************************
+skipping: [redis-node-1]
+
+TASK [Show slot coverage] ******************************************************
+ok: [redis-node-1] => {
+    "msg": "PASS — cluster slots assigned"
+}
+
+TASK [Check replica links] *****************************************************
+changed: [redis-node-1]
+
+TASK [Fail if replicas missing] ************************************************
+skipping: [redis-node-1]
+
+TASK [Show replica topology] ***************************************************
+ok: [redis-node-1] => {
+    "msg": "PASS — replicas connected"
+}
+
+TASK [Collect Redis versions] **************************************************
+changed: [redis-node-1]
+
+TASK [Fail if versions inconsistent] *******************************************
+skipping: [redis-node-1]
+
+TASK [Show version consistency] ************************************************
+ok: [redis-node-1] => {
+    "msg": "PASS — all nodes running Redis 7.2.6"
+}
+
+TASK [Run existing data verification] ******************************************
+changed: [redis-node-1]
+
+TASK [Show data verification] **************************************************
+ok: [redis-node-1] => {
+    "verify_result.stdout": "PASS — 1000/1000 keys verified"
+}
+
+TASK [Final verification summary] **********************************************
+ok: [redis-node-1] => {
+    "msg": "FULL VERIFICATION COMPLETE"
 }
 
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-1               : ok=11   changed=5    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
 
+
+FULL VERIFICATION COMPLETE
